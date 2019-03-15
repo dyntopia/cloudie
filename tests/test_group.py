@@ -1,20 +1,9 @@
-import tempfile
-from unittest import TestCase
-
-import click
-import click.testing
-
 from cloudie import cli
 
+from .helpers import ClickTestCase
 
-class TestGroup(TestCase):
-    def setUp(self) -> None:
-        self.config = tempfile.NamedTemporaryFile()
-        self.runner = click.testing.CliRunner()
 
-    def tearDown(self) -> None:
-        self.config.close()
-
+class TestGroup(ClickTestCase):
     def test_not_implemented(self) -> None:
         @cli.cli.command()
         def command() -> None:

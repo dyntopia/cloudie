@@ -1,20 +1,11 @@
-import tempfile
-from unittest import TestCase
-
 import click
-import click.testing
 
 from cloudie import cli
 
+from .helpers import ClickTestCase
 
-class TestCli(TestCase):
-    def setUp(self) -> None:
-        self.config = tempfile.NamedTemporaryFile()
-        self.runner = click.testing.CliRunner()
 
-    def tearDown(self) -> None:
-        self.config.close()
-
+class TestCli(ClickTestCase):
     def test_missing_command(self) -> None:
         args = ["--config-file", self.config.name]
         result = self.runner.invoke(cli.cli, args)

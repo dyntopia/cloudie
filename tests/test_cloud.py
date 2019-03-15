@@ -1,22 +1,12 @@
-import tempfile
-from unittest import TestCase
-
-import click
-import click.testing
 from libcloud.common.base import BaseDriver
 from libcloud.compute.providers import Provider
 
 from cloudie import cli, cloud
 
+from .helpers import ClickTestCase
 
-class TestPassDriver(TestCase):
-    def setUp(self) -> None:
-        self.config = tempfile.NamedTemporaryFile()
-        self.runner = click.testing.CliRunner()
 
-    def tearDown(self) -> None:
-        self.config.close()
-
+class TestPassDriver(ClickTestCase):
     def test_success(self) -> None:
         @cli.cli.command()
         @cloud.pass_driver(Provider)
