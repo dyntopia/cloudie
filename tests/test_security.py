@@ -39,13 +39,9 @@ class TestSecurity(TestCase):
         libcloud.compute.ssh.have_paramiko = orig_paramiko
 
     def test_ssh_exception(self) -> None:
-        for cls in [
-                "BaseSSHClient",
-                "MockSSHClient",
-                "ParamikoSSHClient",
-                "ShellOutSSHClient",
-                "SSHClient",
-        ]:
+        self.assertEqual(len(security.SSH_CLIENTS), 5)
+
+        for cls in security.SSH_CLIENTS:
             with self.assertRaises(RuntimeError) as ctx:
                 getattr(libcloud.compute.ssh, cls)()  # pylint: disable=E1120
             self.assertEqual(str(ctx.exception), "ssh module is disabled")

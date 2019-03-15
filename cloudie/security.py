@@ -16,13 +16,15 @@ class NoSSH:
         raise RuntimeError("ssh module is disabled")
 
 
-for cls in [
-        "BaseSSHClient",
-        "MockSSHClient",
-        "ParamikoSSHClient",
-        "ShellOutSSHClient",
-        "SSHClient",
-]:
+SSH_CLIENTS = [
+    "BaseSSHClient",
+    "MockSSHClient",
+    "ParamikoSSHClient",
+    "ShellOutSSHClient",
+    "SSHClient",
+]
+
+for cls in SSH_CLIENTS:
     assert hasattr(libcloud.compute.ssh, cls)
     setattr(libcloud.compute.ssh, cls, NoSSH)
 
