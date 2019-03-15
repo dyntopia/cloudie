@@ -4,12 +4,12 @@ import os
 import click
 import munch
 
-from . import security
+from . import group, security
 
 assert security  # to make pyflakes happy
 
 
-@click.group()
+@click.group(cls=group.Group)
 @click.option("--config-file", default="~/.cloudie.ini", type=str)
 @click.pass_context
 def cli(ctx: click.Context, config_file: str) -> None:
