@@ -1,2 +1,3 @@
 [run]
 source = cloudie
+omit = cloudie/__main__.py
