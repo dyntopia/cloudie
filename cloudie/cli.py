@@ -4,7 +4,7 @@ import os
 import click
 import munch
 
-from . import group, security
+from . import compute, group, security
 
 assert security  # to make pyflakes happy
 
@@ -21,3 +21,6 @@ def cli(ctx: click.Context, config_file: str) -> None:
 
     ctx.obj = munch.Munch()
     ctx.obj.config = config
+
+
+cli.add_command(compute.compute)
