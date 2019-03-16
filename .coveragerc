@@ -2,3 +2,6 @@
 branch = true
 source = cloudie
 omit = cloudie/__main__.py
+
+[report]
+fail_under = 100
