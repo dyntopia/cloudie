@@ -1,20 +1,20 @@
 from typing import Any
 
 import click
+from libcloud.common.types import InvalidCredsError
 
 
 class Group(click.Group):
     """
-    Helper for `click.Group` that handles unimplemented functionality.
+    Helper for `click.Group` that handles libcloud errors.
 
-    API calls that are unsupported by the current `libcloud` provider
-    throws `NotImplementedError`.  These exceptions are re-raised as an
-    exception that click handles so that individual commands don't have
-    to deal with them.
+    Exceptions from API calls in `libcloud` are re-raised as exceptions
+    that click handles so that individual commands don't have to deal
+    with them.
     """
 
     def invoke(self, ctx: click.Context) -> Any:
         try:
             return super().invoke(ctx)
-        except NotImplementedError as e:
+        except (NotImplementedError, InvalidCredsError) as e:
             raise click.ClickException(str(e))
