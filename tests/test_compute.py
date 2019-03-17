@@ -1,5 +1,7 @@
 from unittest.mock import patch
 
+from libcloud.compute.providers import get_driver, set_driver
+
 from cloudie import cli
 
 from .helpers import ClickTestCase, TexttableMock
@@ -9,7 +11,17 @@ class TestCompute(ClickTestCase):
     def setUp(self) -> None:
         super().setUp()
 
-        self.config.write(b"[xyz]\nprovider=dummy\nkey=abcd")
+        try:
+            get_driver("dummy-extended")
+        except AttributeError:
+            set_driver(
+                "dummy-extended",
+                "tests.helpers",
+                "ExtendedDummyNodeDriver",
+            )
+
+        self.config.write(b"[dummy]\nprovider=dummy\nkey=abcd\n")
+        self.config.write(b"[dummy-ext]\nprovider=dummy-extended\nkey=abcd\n")
         self.config.flush()
 
     def test_list_images(self) -> None:
@@ -19,7 +31,7 @@ class TestCompute(ClickTestCase):
             "compute",
             "list-images",
             "--role",
-            "xyz",
+            "dummy",
         ]
         result = self.runner.invoke(cli.cli, args)
 
