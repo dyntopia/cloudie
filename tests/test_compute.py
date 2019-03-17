@@ -70,3 +70,38 @@ class TestCompute(ClickTestCase):
         for kp in ExtendedDummyNodeDriver.key_pairs:
             row = [kp.extra["id"], kp.name, kp.fingerprint]
             self.assertTrue(row in t.rows)
+
+    def test_list_nodes(self) -> None:
+        args = [
+            "--config-file",
+            self.config.name,
+            "compute",
+            "list-nodes",
+            "--role",
+            "dummy-ext",
+        ]
+
+        t = TexttableMock()
+        with patch("texttable.Texttable") as mock:
+            mock.return_value = t
+            result = self.runner.invoke(cli.cli, args)
+            self.assertEqual(result.exit_code, 0)
+
+        headers = [
+            "ID",
+            "Name",
+            "State",
+            "Public IP(s)",
+            "Private IP(s)",
+        ]
+        self.assertEqual(t.headers, headers)
+
+        for n in ExtendedDummyNodeDriver("...").nl:
+            row = [
+                n.id,
+                n.name,
+                n.state,
+                ", ".join(n.public_ips),
+                ", ".join(n.private_ips),
+            ]
+            self.assertTrue(row in t.rows)

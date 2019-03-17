@@ -27,3 +27,15 @@ def list_key_pairs(driver: BaseDriver) -> None:
         ["Name", "name"],
         ["Public key", "fingerprint", "pub_key"],
     ], driver.list_key_pairs())
+
+
+@compute.command("list-nodes")
+@cloud.pass_driver(Provider)
+def list_nodes(driver: BaseDriver) -> None:
+    table.show([
+        ["ID", "id"],
+        ["Name", "name"],
+        ["State", "state"],
+        ["Public IP(s)", "public_ips"],
+        ["Private IP(s)", "private_ips"],
+    ], driver.list_nodes())
