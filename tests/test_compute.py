@@ -1,8 +1,12 @@
 from unittest.mock import patch
 
-from libcloud.compute.providers import get_driver, set_driver
+from libcloud.common.base import BaseDriver
+from libcloud.compute import ssh
+from libcloud.compute.deployment import SSHKeyDeployment
+from libcloud.compute.providers import Provider, get_driver, set_driver
+from libcloud.compute.types import DeploymentError
 
-from cloudie import cli
+from cloudie import cli, cloud, compute
 
 from .helpers import ClickTestCase, ExtendedDummyNodeDriver, TexttableMock
 
@@ -23,6 +27,36 @@ class TestCompute(ClickTestCase):
         self.config.write(b"[dummy]\nprovider=dummy\nkey=abcd\n")
         self.config.write(b"[dummy-ext]\nprovider=dummy-extended\nkey=abcd\n")
         self.config.flush()
+
+    def test_no_ssh_deploy(self) -> None:
+        """
+        See security.py.
+        """
+
+        @compute.compute.command("deploy")
+        @cloud.pass_driver(Provider)
+        def command(driver: BaseDriver) -> None:
+            orig_paramiko = ssh.have_paramiko
+            ssh.have_paramiko = True
+
+            deploy = SSHKeyDeployment("ssh-rsa data")
+            driver.features["create_node"].append("password")
+            driver.deploy_node(deploy=deploy)
+
+            ssh.have_paramiko = orig_paramiko
+
+        args = [
+            "--config-file",
+            self.config.name,
+            "compute",
+            command.name,
+            "--role",
+            "dummy",
+        ]
+        result = self.runner.invoke(cli.cli, args)
+        self.assertEqual(type(result.exception), DeploymentError)
+        self.assertEqual(str(result.exception.value), "ssh module is disabled")
+        self.assertNotEqual(result.exit_code, 0)
 
     def test_list_images(self) -> None:
         args = [
