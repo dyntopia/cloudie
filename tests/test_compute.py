@@ -71,6 +71,27 @@ class TestCompute(ClickTestCase):
             row = [kp.extra["id"], kp.name, kp.fingerprint]
             self.assertTrue(row in t.rows)
 
+    def test_list_locations(self) -> None:
+        args = [
+            "--config-file",
+            self.config.name,
+            "compute",
+            "list-locations",
+            "--role",
+            "dummy-ext",
+        ]
+
+        t = TexttableMock()
+        with patch("texttable.Texttable") as mock:
+            mock.return_value = t
+            result = self.runner.invoke(cli.cli, args)
+            self.assertEqual(result.exit_code, 0)
+
+        self.assertEqual(t.headers, ["ID", "Name", "Country"])
+        for l in ExtendedDummyNodeDriver("...").list_locations():
+            row = [l.id, l.name, l.country]
+            self.assertTrue(row in t.rows)
+
     def test_list_nodes(self) -> None:
         args = [
             "--config-file",

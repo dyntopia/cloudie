@@ -29,6 +29,16 @@ def list_key_pairs(driver: BaseDriver) -> None:
     ], driver.list_key_pairs())
 
 
+@compute.command("list-locations")
+@cloud.pass_driver(Provider)
+def list_locations(driver: BaseDriver) -> None:
+    table.show([
+        ["ID", "id"],
+        ["Name", "name"],
+        ["Country", "country"],
+    ], driver.list_locations())
+
+
 @compute.command("list-nodes")
 @cloud.pass_driver(Provider)
 def list_nodes(driver: BaseDriver) -> None:
