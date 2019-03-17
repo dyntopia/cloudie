@@ -3,6 +3,8 @@ from unittest.mock import patch
 
 from cloudie import table
 
+from .helpers import TexttableMock
+
 
 class Obj:
     string1 = "abcd"
@@ -20,34 +22,36 @@ class Obj:
 
 
 class TestTable(TestCase):
-    @staticmethod
-    def test_values() -> None:
-        with patch("texttable.Texttable.header") as header:
-            with patch("texttable.Texttable.add_rows") as add_rows:
-                table.show([
-                    ["String1", "no_string", "string1"],
-                    ["String2", "string2", "string1"],
-                    ["Empty", "does", "not", "exist"],
-                    ["List1", "lst", "none"],
-                    ["List2", "dct.second.list"],
-                    ["Int", "dct.third.int"],
-                    ["string1", "dct.second.list", "xyz"],
-                ], [Obj(), Obj()])
+    def test_values(self) -> None:
+        t = TexttableMock()
+        with patch("texttable.Texttable") as mock:
+            mock.return_value = t
+            table.show([
+                ["String1", "no_string", "string1"],
+                ["String2", "string2", "string1"],
+                ["Empty", "does", "not", "exist"],
+                ["List1", "lst", "none"],
+                ["List2", "dct.second.list"],
+                ["Int", "dct.third.int"],
+                ["string1", "dct.second.list", "xyz"],
+            ], [Obj(), Obj()])
 
-                header.assert_called_with([
-                    "String1",
-                    "String2",
-                    "Empty",
-                    "List1",
-                    "List2",
-                    "Int",
-                    "string1",
-                ])
+            headers = [
+                "String1",
+                "String2",
+                "Empty",
+                "List1",
+                "List2",
+                "Int",
+                "string1",
+            ]
+            self.assertEqual(t.headers, headers)
 
-                add_rows.assert_called_with([
-                    ["abcd", "xyz", "", "aa, 123", "x", 321, "x"],
-                    ["abcd", "xyz", "", "aa, 123", "x", 321, "x"],
-                ], False)
+            rows = [
+                ["abcd", "xyz", "", "aa, 123", "x", "321", "x"],
+                ["abcd", "xyz", "", "aa, 123", "x", "321", "x"],
+            ]
+            self.assertEqual(t.rows, rows)
 
 
 class TestGetValue(TestCase):
