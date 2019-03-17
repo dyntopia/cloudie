@@ -26,7 +26,7 @@ class TestCompute(ClickTestCase):
             ("2", "Ubuntu 9.04"),
             ("3", "Slackware 4"),
         ]
-        lines = result.output.strip().split("\n")
+        lines = result.output.strip().split("\n")[2:]
 
         self.assertEqual(len(images), len(lines))
         for image, line in zip(images, lines):

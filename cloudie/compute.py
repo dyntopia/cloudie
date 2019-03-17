@@ -2,7 +2,7 @@ import click
 from libcloud.common.base import BaseDriver
 from libcloud.compute.providers import Provider
 
-from . import cloud
+from . import cloud, table
 
 
 @click.group()
@@ -13,5 +13,7 @@ def compute() -> None:
 @compute.command("list-images")
 @cloud.pass_driver(Provider)
 def list_images(driver: BaseDriver) -> None:
-    for image in driver.list_images():
-        print("{} - {}".format(image.id, image.name))
+    table.show([
+        ["ID", "id"],
+        ["Name", "name"],
+    ], driver.list_images())
