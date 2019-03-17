@@ -1,6 +1,8 @@
+from unittest.mock import patch
+
 from cloudie import cli
 
-from .helpers import ClickTestCase
+from .helpers import ClickTestCase, TexttableMock
 
 
 class TestCompute(ClickTestCase):
@@ -22,14 +24,16 @@ class TestCompute(ClickTestCase):
         result = self.runner.invoke(cli.cli, args)
 
         images = [
-            ("1", "Ubuntu 9.10"),
-            ("2", "Ubuntu 9.04"),
-            ("3", "Slackware 4"),
+            ["1", "Ubuntu 9.10"],
+            ["2", "Ubuntu 9.04"],
+            ["3", "Slackware 4"],
         ]
-        lines = result.output.strip().split("\n")[2:]
 
-        self.assertEqual(len(images), len(lines))
-        for image, line in zip(images, lines):
-            self.assertTrue(image[0] in line)
-            self.assertTrue(image[1] in line)
-        self.assertEqual(result.exit_code, 0)
+        t = TexttableMock()
+        with patch("texttable.Texttable") as mock:
+            mock.return_value = t
+            result = self.runner.invoke(cli.cli, args)
+            self.assertEqual(result.exit_code, 0)
+
+        self.assertEqual(t.headers, ["ID", "Name"])
+        self.assertEqual(t.rows, images)
