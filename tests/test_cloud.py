@@ -22,6 +22,21 @@ class TestPassDriver(ClickTestCase):
         self.assertEqual(result.output, "Dummy Node Provider - abcd\n")
         self.assertEqual(result.exit_code, 0)
 
+    def test_success_unsupported_options(self) -> None:
+        @cli.cli.command()
+        @cloud.pass_driver(Provider)
+        def command(driver: BaseDriver) -> None:
+            print("{} - {}".format(driver.name, driver.creds))
+
+        self.config.write(b"[x]\nprovider=dummy\nkey=abcd\naaa=bbb\ncc=dd\n")
+        self.config.flush()
+
+        args = ["--config-file", self.config.name, command.name, "--role", "x"]
+        result = self.runner.invoke(cli.cli, args)
+
+        self.assertEqual(result.output, "Dummy Node Provider - abcd\n")
+        self.assertEqual(result.exit_code, 0)
+
     def test_missing_role(self) -> None:
         @cli.cli.command()
         @cloud.pass_driver(Provider)

@@ -1,4 +1,5 @@
 import configparser
+import inspect
 from typing import Any, Callable, Union
 
 import click
@@ -17,6 +18,11 @@ def pass_driver(driver_type: object) -> Callable:
         try:
             provider = ctx.obj.config.get(role, "provider")
             key = ctx.obj.config.get(role, "key")
+            other = {
+                k: v
+                for k, v in ctx.obj.config.items(role)
+                if k not in ["provider", "key"]
+            }
         except configparser.NoSectionError:
             raise click.ClickException("missing role '{}'".format(role))
         except configparser.NoOptionError:
@@ -25,7 +31,11 @@ def pass_driver(driver_type: object) -> Callable:
             )
 
         try:
-            return libcloud.get_driver(driver_type, provider)(key)
+            driver = libcloud.get_driver(driver_type, provider)
+            params = inspect.signature(driver).parameters
+            kwargs = {k: v for k, v in other.items() if k in params}
+
+            return driver(key, **kwargs)
         except AttributeError as e:
             raise click.ClickException("{}".format(e))
 
