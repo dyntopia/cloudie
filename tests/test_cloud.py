@@ -96,3 +96,28 @@ class TestPassDriver(ClickTestCase):
 
         self.assertTrue("Provider nope does not exist" in result.output)
         self.assertNotEqual(result.exit_code, 0)
+
+    def test_no_insecure_connection(self) -> None:
+        """
+        AbiquoNodeDriver initializes its superclass with `secure=False`.
+
+        See the documentation for `allow_insecure` in security.py.
+        """
+
+        @cli.cli.command()
+        @cloud.pass_driver(Provider)
+        def command(driver: BaseDriver) -> None:
+            print("{}".format(driver.name))
+
+        self.config.write(b"[x]\nprovider=abiquo\nkey=a\nsecret=b\nendpoint=c")
+        self.config.flush()
+
+        args = ["--config-file", self.config.name, command.name, "--role", "x"]
+        result = self.runner.invoke(cli.cli, args)
+
+        self.assertEqual(
+            str(result.exception),
+            "Non https connections are not allowed (use secure=True)"
+        )
+        self.assertEqual(type(result.exception), ValueError)
+        self.assertNotEqual(result.exit_code, 0)

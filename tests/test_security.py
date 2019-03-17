@@ -1,16 +1,29 @@
+from cloudie import security  # isort:skip, pylint:disable=C0411,I0021
+
 from unittest import TestCase
 
 import libcloud
+import libcloud.common.ovh
 import libcloud.compute.deployment
+import libcloud.compute.drivers.ec2
+import libcloud.compute.drivers.vultr
 import libcloud.compute.ssh
 import libcloud.security
-
-from cloudie import security
 
 assert security  # to make pyflakes happy
 
 
 class TestSecurity(TestCase):
+    def test_connection_no_insecure(self) -> None:
+        allow_insecure = [
+            libcloud.common.base.Connection.allow_insecure,
+            libcloud.common.ovh.OvhConnection.allow_insecure,
+            libcloud.compute.drivers.ec2.EC2Connection.allow_insecure,
+            libcloud.compute.drivers.vultr.VultrConnection.allow_insecure,
+        ]
+        for insecure in allow_insecure:
+            self.assertFalse(insecure)
+
     def test_ssh_deploy_exception(self) -> None:
         """
         Make sure that the SSH module throws.
