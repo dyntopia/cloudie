@@ -22,5 +22,6 @@ setup(
     author="Hans Jerry Illikainen",
     author_email="hji@dyntopia.com",
     install_requires=list(get_requirements("requirements/requirements.txt")),
+    packages=["cloudie"],
     entry_points={"console_scripts": ["cloudie = cloudie.cli:cli"]}
 )
