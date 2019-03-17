@@ -4,7 +4,7 @@ from libcloud.compute.providers import get_driver, set_driver
 
 from cloudie import cli
 
-from .helpers import ClickTestCase, TexttableMock
+from .helpers import ClickTestCase, ExtendedDummyNodeDriver, TexttableMock
 
 
 class TestCompute(ClickTestCase):
@@ -49,3 +49,24 @@ class TestCompute(ClickTestCase):
 
         self.assertEqual(t.headers, ["ID", "Name"])
         self.assertEqual(t.rows, images)
+
+    def test_list_key_pairs(self) -> None:
+        args = [
+            "--config-file",
+            self.config.name,
+            "compute",
+            "list-key-pairs",
+            "--role",
+            "dummy-ext",
+        ]
+
+        t = TexttableMock()
+        with patch("texttable.Texttable") as mock:
+            mock.return_value = t
+            result = self.runner.invoke(cli.cli, args)
+            self.assertEqual(result.exit_code, 0)
+
+        self.assertEqual(t.headers, ["ID", "Name", "Public key"])
+        for kp in ExtendedDummyNodeDriver.key_pairs:
+            row = [kp.extra["id"], kp.name, kp.fingerprint]
+            self.assertTrue(row in t.rows)

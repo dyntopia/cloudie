@@ -17,3 +17,13 @@ def list_images(driver: BaseDriver) -> None:
         ["ID", "id"],
         ["Name", "name"],
     ], driver.list_images())
+
+
+@compute.command("list-key-pairs")
+@cloud.pass_driver(Provider)
+def list_key_pairs(driver: BaseDriver) -> None:
+    table.show([
+        ["ID", "id", "extra.id"],
+        ["Name", "name"],
+        ["Public key", "fingerprint", "pub_key"],
+    ], driver.list_key_pairs())
