@@ -1,5 +1,5 @@
 from libcloud.common.base import BaseDriver
-from libcloud.compute.providers import Provider
+from libcloud.compute.providers import Provider as ComputeProvider
 
 from cloudie import cli, cloud
 
@@ -9,7 +9,7 @@ from .helpers import ClickTestCase
 class TestPassDriver(ClickTestCase):
     def test_success(self) -> None:
         @cli.cli.command()
-        @cloud.pass_driver(Provider)
+        @cloud.pass_driver(ComputeProvider)
         def command(driver: BaseDriver) -> None:
             print("{} - {}".format(driver.name, driver.creds))
 
@@ -24,7 +24,7 @@ class TestPassDriver(ClickTestCase):
 
     def test_success_unsupported_options(self) -> None:
         @cli.cli.command()
-        @cloud.pass_driver(Provider)
+        @cloud.pass_driver(ComputeProvider)
         def command(driver: BaseDriver) -> None:
             print("{} - {}".format(driver.name, driver.creds))
 
@@ -39,7 +39,7 @@ class TestPassDriver(ClickTestCase):
 
     def test_missing_role(self) -> None:
         @cli.cli.command()
-        @cloud.pass_driver(Provider)
+        @cloud.pass_driver(ComputeProvider)
         def command(_driver: BaseDriver) -> None:
             pass
 
@@ -54,7 +54,7 @@ class TestPassDriver(ClickTestCase):
 
     def test_missing_provider(self) -> None:
         @cli.cli.command()
-        @cloud.pass_driver(Provider)
+        @cloud.pass_driver(ComputeProvider)
         def command(_driver: BaseDriver) -> None:
             pass
 
@@ -69,7 +69,7 @@ class TestPassDriver(ClickTestCase):
 
     def test_missing_key(self) -> None:
         @cli.cli.command()
-        @cloud.pass_driver(Provider)
+        @cloud.pass_driver(ComputeProvider)
         def command(_driver: BaseDriver) -> None:
             pass
 
@@ -84,7 +84,7 @@ class TestPassDriver(ClickTestCase):
 
     def test_invalid_provider(self) -> None:
         @cli.cli.command()
-        @cloud.pass_driver(Provider)
+        @cloud.pass_driver(ComputeProvider)
         def command(driver: BaseDriver) -> None:
             print("{} - {}".format(driver.name, driver.creds))
 
@@ -105,7 +105,7 @@ class TestPassDriver(ClickTestCase):
         """
 
         @cli.cli.command()
-        @cloud.pass_driver(Provider)
+        @cloud.pass_driver(ComputeProvider)
         def command(driver: BaseDriver) -> None:
             print("{}".format(driver.name))
 
