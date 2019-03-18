@@ -1,5 +1,8 @@
+from unittest.mock import patch
+
 from libcloud.common.base import BaseDriver
 from libcloud.compute.providers import Provider as ComputeProvider
+from libcloud.dns.providers import Provider as DNSProvider
 
 from cloudie import cli, cloud
 
@@ -121,3 +124,57 @@ class TestPassDriver(ClickTestCase):
         )
         self.assertEqual(type(result.exception), ValueError)
         self.assertNotEqual(result.exit_code, 0)
+
+    def test_secure(self) -> None:
+        @cli.cli.command()
+        @cloud.pass_driver(DNSProvider)
+        def command(driver: BaseDriver) -> None:
+            print("{}".format(driver.name))
+
+        self.config.write(b"[x]\nprovider=powerdns\nkey=abc\n")
+        self.config.flush()
+
+        with patch("libcloud.dns.base.DNSDriver.__init__") as mock:
+            args = [
+                "--config-file",
+                self.config.name,
+                command.name,
+                "--role",
+                "x",
+            ]
+            result = self.runner.invoke(cli.cli, args)
+            self.assertEqual(result.output, "PowerDNS\n")
+
+            mock.assert_called_with(
+                key="abc",
+                secure=True,
+                host=None,
+                port=None,
+            )
+
+    def test_overridden_secure(self) -> None:
+        @cli.cli.command()
+        @cloud.pass_driver(DNSProvider)
+        def command(driver: BaseDriver) -> None:
+            print("{}".format(driver.name))
+
+        self.config.write(b"[x]\nprovider=powerdns\nkey=abc\nsecure=nope\n")
+        self.config.flush()
+
+        with patch("libcloud.dns.base.DNSDriver.__init__") as mock:
+            args = [
+                "--config-file",
+                self.config.name,
+                command.name,
+                "--role",
+                "x",
+            ]
+            result = self.runner.invoke(cli.cli, args)
+            self.assertEqual(result.output, "PowerDNS\n")
+
+            mock.assert_called_with(
+                key="abc",
+                secure=True,
+                host=None,
+                port=None,
+            )

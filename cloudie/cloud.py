@@ -35,6 +35,10 @@ def pass_driver(driver_type: object) -> Callable:
             params = inspect.signature(driver).parameters
             kwargs = {k: v for k, v in other.items() if k in params}
 
+            # See the comment on secure/allow_insecure in security.py.
+            if "secure" in params:
+                kwargs["secure"] = True
+
             return driver(key, **kwargs)
         except AttributeError as e:
             raise click.ClickException("{}".format(e))
