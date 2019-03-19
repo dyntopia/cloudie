@@ -225,7 +225,7 @@ class TestCreateNode(ClickTestCase):
                 "ExtendedDummyNodeDriver",
             )
         self.ssh_key = tempfile.NamedTemporaryFile()
-        self.ssh_key.write(b"default-keydata")
+        self.ssh_key.write(b"ssh-ed25519 data comment")
         self.ssh_key.flush()
 
         self.config.write(
@@ -409,7 +409,7 @@ class TestCreateNode(ClickTestCase):
 
     def test_feature_ssh_key_from_arg(self) -> None:
         with tempfile.NamedTemporaryFile() as tmp:
-            tmp.write(b"overridden keydata")
+            tmp.write(b"ssh-rsa asdf something")
             tmp.flush()
 
             args = [
@@ -428,7 +428,7 @@ class TestCreateNode(ClickTestCase):
             result = self.runner.invoke(cli.cli, args)
 
             auth = ExtendedDummyNodeDriver.call_args["create_node"]["auth"]
-            self.assertEqual(auth.pubkey, "overridden keydata")
+            self.assertEqual(auth.pubkey, "ssh-rsa asdf something")
             self.assertEqual(result.exit_code, 0)
 
     def test_feature_ssh_key_from_config(self) -> None:
@@ -446,7 +446,7 @@ class TestCreateNode(ClickTestCase):
         result = self.runner.invoke(cli.cli, args)
 
         auth = ExtendedDummyNodeDriver.call_args["create_node"]["auth"]
-        self.assertEqual(auth.pubkey, "default-keydata")
+        self.assertEqual(auth.pubkey, "ssh-ed25519 data comment")
         self.assertEqual(result.exit_code, 0)
 
     def test_feature_password_from_arg(self) -> None:

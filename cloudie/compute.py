@@ -8,7 +8,7 @@ from libcloud.compute.base import NodeAuthPassword, NodeAuthSSHKey
 from libcloud.compute.providers import Provider
 from munch import DefaultMunch
 
-from . import option, table
+from . import option, table, utils
 
 assert security  # to make pyflakes happy
 
@@ -148,7 +148,7 @@ def create_node(driver: BaseDriver, **kwargs: Any) -> None:
     if "ssh_key" in features:
         ssh_key = kwargs.pop("ssh_key")
         if ssh_key:
-            kw.auth = NodeAuthSSHKey(ssh_key.read())
+            kw.auth = NodeAuthSSHKey(utils.read_public_key(ssh_key)[1])
 
     if "password" in features and not kw.auth:
         password = kwargs.pop("password")
