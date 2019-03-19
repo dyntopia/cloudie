@@ -1201,3 +1201,81 @@ class TestImportKeyPair(ClickTestCase):
 
                 self.assertEqual(result.output, "Error: Import failed\n")
                 self.assertNotEqual(result.exit_code, 0)
+
+
+class TestDeleteKeyPair(ClickTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+        try:
+            get_driver("dummy-extended")
+        except AttributeError:
+            set_driver(
+                "dummy-extended",
+                "tests.helpers",
+                "ExtendedDummyNodeDriver",
+            )
+
+        self.config.write(
+            b"""
+            [role.dummy-ext]
+            provider = "dummy-extended"
+            key = "key-dummy"
+            """
+        )
+        self.config.flush()
+
+    def test_success(self) -> None:
+        args = [
+            "--config-file",
+            self.config.name,
+            "compute",
+            "delete-key-pair",
+            "--role",
+            "dummy-ext",
+            "--id",
+            "111",
+        ]
+
+        result = self.runner.invoke(cli.cli, args)
+        self.assertEqual(result.exit_code, 0)
+
+    def test_fail(self) -> None:
+        m = "tests.helpers.ExtendedDummyNodeDriver.delete_key_pair"
+        with patch(m) as mock:
+            mock.return_value = False
+
+            args = [
+                "--config-file",
+                self.config.name,
+                "compute",
+                "delete-key-pair",
+                "--role",
+                "dummy-ext",
+                "--id",
+                "111",
+            ]
+
+            result = self.runner.invoke(cli.cli, args)
+            self.assertEqual(result.output, "Error: Delete failed\n")
+            self.assertNotEqual(result.exit_code, 0)
+
+    def test_attribute_error(self) -> None:
+        m = "tests.helpers.ExtendedDummyNodeDriver.delete_key_pair"
+        with patch(m) as mock:
+            mock.side_effect = AttributeError("xyz")
+
+            args = [
+                "--config-file",
+                self.config.name,
+                "compute",
+                "delete-key-pair",
+                "--role",
+                "dummy-ext",
+                "--id",
+                "111",
+            ]
+
+            result = self.runner.invoke(cli.cli, args)
+            self.assertTrue("xyz" in result.output)
+            self.assertNotEqual(result.exit_code, 0)

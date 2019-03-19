@@ -58,6 +58,9 @@ class ExtendedDummyNodeDriver(DummyNodeDriver):  # type: ignore
     def list_key_pairs(self) -> List[KeyPair]:
         return self.key_pairs
 
+    def delete_key_pair(self, _key_pair: KeyPair) -> bool:
+        return True
+
     def create_node(self, **kwargs: Any) -> Node:
         self.call_args["create_node"] = kwargs
         return super().create_node(**kwargs)

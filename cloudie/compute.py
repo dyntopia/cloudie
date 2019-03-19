@@ -124,6 +124,42 @@ def import_key_pair(driver: BaseDriver, **kwargs: Any) -> None:
     ], driver.list_key_pairs())
 
 
+@compute.command("delete-key-pair")
+@option.add("--id", required=True)
+@option.pass_driver(Provider)
+def delete_key_pair(driver: BaseDriver, **kwargs: Any) -> None:
+    """
+    Delete a public key.
+
+    The base `NodeDriver` takes a single argument of the type `KeyPair`.
+
+    Internally, different drivers use different attributes from the
+    `KeyPair` to delete a key.  Some use `id` and some use `name`.
+
+    Furthermore, not every driver return a list of `KeyPair` from
+    `list_key_pairs()`, and not every driver that returns a `KeyPair`
+    use the `id` attribute -- e.g. DigitalOcean sets the ID in an
+    `extra` dictionary.  ZZZ.
+    """
+
+    def predicate(kp: object) -> bool:
+        id_ = getattr(kp, "id", None) or getattr(kp, "extra", {}).get("id", "")
+        return str(id_) == kwargs.get("id")
+
+    kp = _get(driver.list_key_pairs, predicate)
+    try:
+        if not driver.delete_key_pair(kp):
+            raise click.ClickException("Delete failed")
+    except AttributeError as e:
+        raise click.ClickException("Bug: {}: {}".format(driver.name, e))
+
+    table.show([
+        ["ID", "id", "extra.id"],
+        ["Name", "name"],
+        ["Public key", "fingerprint", "pub_key"],
+    ], driver.list_key_pairs())
+
+
 @compute.command("destroy-node")
 @option.add("--id", required=True)
 @option.pass_driver(Provider)
