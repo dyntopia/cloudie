@@ -23,6 +23,9 @@ def compute() -> None:
 @compute.command("list-images")
 @option.pass_driver(Provider)
 def list_images(driver: BaseDriver) -> None:
+    """
+    List images.
+    """
     table.show([
         ["ID", "id"],
         ["Name", "name"],
@@ -32,6 +35,9 @@ def list_images(driver: BaseDriver) -> None:
 @compute.command("list-key-pairs")
 @option.pass_driver(Provider)
 def list_key_pairs(driver: BaseDriver) -> None:
+    """
+    List public keys.
+    """
     table.show([
         ["ID", "id", "extra.id"],
         ["Name", "name"],
@@ -42,6 +48,9 @@ def list_key_pairs(driver: BaseDriver) -> None:
 @compute.command("list-locations")
 @option.pass_driver(Provider)
 def list_locations(driver: BaseDriver) -> None:
+    """
+    List locations.
+    """
     table.show([
         ["ID", "id"],
         ["Name", "name"],
@@ -52,6 +61,9 @@ def list_locations(driver: BaseDriver) -> None:
 @compute.command("list-nodes")
 @option.pass_driver(Provider)
 def list_nodes(driver: BaseDriver) -> None:
+    """
+    List nodes.
+    """
     table.show([
         ["ID", "id"],
         ["Name", "name"],
@@ -64,6 +76,9 @@ def list_nodes(driver: BaseDriver) -> None:
 @compute.command("list-sizes")
 @option.pass_driver(Provider)
 def list_sizes(driver: BaseDriver) -> None:
+    """
+    List sizes.
+    """
     table.show([
         ["ID", "id"],
         ["Name", "name"],
@@ -164,6 +179,9 @@ def delete_key_pair(driver: BaseDriver, **kwargs: Any) -> None:
 @option.add("--id", required=True)
 @option.pass_driver(Provider)
 def destroy_node(driver: BaseDriver, **kwargs: Any) -> None:
+    """
+    Destroy a node.
+    """
     node = _get(driver.list_nodes, lambda n: n.id == kwargs["id"])
     if not driver.destroy_node(node):
         raise click.ClickException("could not destroy node")
