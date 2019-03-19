@@ -18,22 +18,22 @@ class TestCli(ClickTestCase):
         def command() -> None:
             pass
 
-        self.config.write(b"asdf")
+        self.config.write(b"[asdf")
         self.config.flush()
 
         args = ["--config-file", self.config.name, command.name]
         result = self.runner.invoke(cli.cli, args)
 
-        self.assertTrue("File contains no section headers" in result.output)
+        self.assertTrue("Key group not on a line by itself" in result.output)
         self.assertNotEqual(result.exit_code, 0)
 
     def test_valid_config(self) -> None:
         @cli.cli.command()
         @click.pass_context
         def command(ctx: click.Context) -> None:
-            print(ctx.obj.config.get("asdf", "key"))
+            print(ctx.obj.config.role.asdf.key)
 
-        self.config.write(b"[asdf]\nkey=value\n")
+        self.config.write(b"[role.asdf]\nkey='value'\n")
         self.config.flush()
 
         args = ["--config-file", self.config.name, command.name]

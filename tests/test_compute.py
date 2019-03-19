@@ -24,8 +24,17 @@ class TestCompute(ClickTestCase):
                 "ExtendedDummyNodeDriver",
             )
 
-        self.config.write(b"[dummy]\nprovider=dummy\nkey=abcd\n")
-        self.config.write(b"[dummy-ext]\nprovider=dummy-extended\nkey=abcd\n")
+        self.config.write(
+            b"""
+            [role.dummy]
+            provider = "dummy"
+            key = "abcd"
+
+            [role.dummy-ext]
+            provider = "dummy-extended"
+            key = "abcd"
+            """
+        )
         self.config.flush()
 
     def test_no_ssh_deploy(self) -> None:

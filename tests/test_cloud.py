@@ -16,7 +16,7 @@ class TestPassDriver(ClickTestCase):
         def command(driver: BaseDriver) -> None:
             print("{} - {}".format(driver.name, driver.creds))
 
-        self.config.write(b"[x]\nprovider=dummy\nkey=abcd\n")
+        self.config.write(b"[role.x]\nprovider='dummy'\nkey='abcd'\n")
         self.config.flush()
 
         args = ["--config-file", self.config.name, command.name, "--role", "x"]
@@ -31,7 +31,15 @@ class TestPassDriver(ClickTestCase):
         def command(driver: BaseDriver) -> None:
             print("{} - {}".format(driver.name, driver.creds))
 
-        self.config.write(b"[x]\nprovider=dummy\nkey=abcd\naaa=bbb\ncc=dd\n")
+        self.config.write(
+            b"""
+            [role.x]
+            provider='dummy'
+            key='abcd'
+            aaa='bbb'
+            cc='dd'
+            """
+        )
         self.config.flush()
 
         args = ["--config-file", self.config.name, command.name, "--role", "x"]
@@ -46,13 +54,13 @@ class TestPassDriver(ClickTestCase):
         def command(_driver: BaseDriver) -> None:
             pass
 
-        self.config.write(b"[xy]\nprovider=dummy\nkey=abcd\n")
+        self.config.write(b"[role.xy]\nprovider='dummy'\nkey='abcd'\n")
         self.config.flush()
 
         args = ["--config-file", self.config.name, command.name, "--role", "x"]
         result = self.runner.invoke(cli.cli, args)
 
-        self.assertTrue("missing role 'x'" in result.output)
+        self.assertEqual(result.output, "Error: unknown role 'x'\n")
         self.assertNotEqual(result.exit_code, 0)
 
     def test_missing_provider(self) -> None:
@@ -61,13 +69,13 @@ class TestPassDriver(ClickTestCase):
         def command(_driver: BaseDriver) -> None:
             pass
 
-        self.config.write(b"[x]\nprovider1=dummy\nkey=abcd\n")
+        self.config.write(b"[role.x]\nprovider1='dummy'\nkey='abcd'\n")
         self.config.flush()
 
         args = ["--config-file", self.config.name, command.name, "--role", "x"]
         result = self.runner.invoke(cli.cli, args)
 
-        self.assertTrue("must specify 'provider' and 'key'" in result.output)
+        self.assertEqual(result.output, "Error: missing 'provider' for 'x'\n")
         self.assertNotEqual(result.exit_code, 0)
 
     def test_missing_key(self) -> None:
@@ -76,13 +84,13 @@ class TestPassDriver(ClickTestCase):
         def command(_driver: BaseDriver) -> None:
             pass
 
-        self.config.write(b"[x]\nprovider=dummy\n")
+        self.config.write(b"[role.x]\nprovider='dummy'\n")
         self.config.flush()
 
         args = ["--config-file", self.config.name, command.name, "--role", "x"]
         result = self.runner.invoke(cli.cli, args)
 
-        self.assertTrue("must specify 'provider' and 'key'" in result.output)
+        self.assertEqual(result.output, "Error: missing 'key' for 'x'\n")
         self.assertNotEqual(result.exit_code, 0)
 
     def test_invalid_provider(self) -> None:
@@ -91,7 +99,7 @@ class TestPassDriver(ClickTestCase):
         def command(driver: BaseDriver) -> None:
             print("{} - {}".format(driver.name, driver.creds))
 
-        self.config.write(b"[x]\nprovider=nope\nkey=abcd\n")
+        self.config.write(b"[role.x]\nprovider='nope'\nkey='abcd'\n")
         self.config.flush()
 
         args = ["--config-file", self.config.name, command.name, "--role", "x"]
@@ -112,7 +120,15 @@ class TestPassDriver(ClickTestCase):
         def command(driver: BaseDriver) -> None:
             print("{}".format(driver.name))
 
-        self.config.write(b"[x]\nprovider=abiquo\nkey=a\nsecret=b\nendpoint=c")
+        self.config.write(
+            b"""
+            [role.x]
+            provider='abiquo'
+            key='a'
+            secret='b'
+            endpoint='c'
+            """
+        )
         self.config.flush()
 
         args = ["--config-file", self.config.name, command.name, "--role", "x"]
@@ -131,7 +147,7 @@ class TestPassDriver(ClickTestCase):
         def command(driver: BaseDriver) -> None:
             print("{}".format(driver.name))
 
-        self.config.write(b"[x]\nprovider=powerdns\nkey=abc\n")
+        self.config.write(b"[role.x]\nprovider='powerdns'\nkey='abc'\n")
         self.config.flush()
 
         with patch("libcloud.dns.base.DNSDriver.__init__") as mock:
@@ -158,7 +174,14 @@ class TestPassDriver(ClickTestCase):
         def command(driver: BaseDriver) -> None:
             print("{}".format(driver.name))
 
-        self.config.write(b"[x]\nprovider=powerdns\nkey=abc\nsecure=nope\n")
+        self.config.write(
+            b"""
+            [role.x]
+            provider='powerdns'
+            key='abc'
+            secure='nope'
+            """
+        )
         self.config.flush()
 
         with patch("libcloud.dns.base.DNSDriver.__init__") as mock:
