@@ -148,7 +148,7 @@ def create_node(driver: BaseDriver, **kwargs: Any) -> None:
     if "ssh_key" in features:
         ssh_key = kwargs.pop("ssh_key")
         if ssh_key:
-            kw.auth = NodeAuthSSHKey(utils.read_public_key(ssh_key)[1])
+            kw.auth = NodeAuthSSHKey(utils.read_public_key(ssh_key)[3])
 
     if "password" in features and not kw.auth:
         password = kwargs.pop("password")
@@ -211,7 +211,7 @@ def _create_node_digitalocean(driver: BaseDriver, kwargs: Any) -> Munch:
     # feature, only a single key is processed here.
     ssh_key = kwargs.pop("ssh_key", None)
     if ssh_key:
-        _comment, data = utils.read_public_key(ssh_key)
+        _kind, _key, _comment, data = utils.read_public_key(ssh_key)
         kp = _get(driver.list_key_pairs, lambda k: k.public_key == data)
         kw.ex_create_attr.ssh_keys = [kp.fingerprint]
 

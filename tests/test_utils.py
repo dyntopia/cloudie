@@ -54,6 +54,8 @@ class TestReadPublicKey(TestCase):
         self.key.flush()
         self.key.seek(0)
 
-        comment, data = utils.read_public_key(self.key)
+        kind, key, comment, data = utils.read_public_key(self.key)
+        self.assertEqual(kind, "ssh-rsa")
+        self.assertEqual(key, "data")
         self.assertEqual(comment, "comment")
         self.assertEqual(data, "ssh-rsa data comment")

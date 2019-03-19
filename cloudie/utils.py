@@ -4,7 +4,7 @@ from typing import IO, Tuple
 import click
 
 
-def read_public_key(f: IO[str]) -> Tuple[str, str]:
+def read_public_key(f: IO[str]) -> Tuple[str, str, str, str]:
     """
     Read a public SSH key.
 
@@ -16,7 +16,7 @@ def read_public_key(f: IO[str]) -> Tuple[str, str]:
         kind, key, comment = data.split(" ")
         if kind.startswith("ssh-") and comment:
             base64.b64decode(key)
-            return (comment, data)
+            return (kind, key, comment, data)
     except ValueError:
         pass
 
