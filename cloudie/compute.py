@@ -1,6 +1,7 @@
 from . import security  # isort:skip, pylint:disable=C0411,I0021
 
 import base64
+import inspect
 from typing import Any, Callable
 
 import click
@@ -72,6 +73,55 @@ def list_sizes(driver: BaseDriver) -> None:
         ["Bandwidth", "bandwidth"],
         ["Price", "extra.price_monthly", "price"],
     ], driver.list_sizes())
+
+
+@compute.command("import-key-pair")
+@option.add("--name", required=True)
+@option.add("--ssh-key", required=True, type=click.File("r"))
+@option.pass_driver(Provider)
+def import_key_pair(driver: BaseDriver, **kwargs: Any) -> None:
+    """
+    Import a public key.
+
+    This functionality is implemented inconsistently in `libcloud`.  The
+    base `NodeDriver` has three methods for creating and importing key
+    pairs:
+
+    1. `create_key_pair()` - abstract method that takes a single
+        argument, `name`.
+
+    2. `import_key_pair_from_string` - abstract method that takes two
+        arguments, `name` and `key_material`.
+
+    3. `import_key_pair_from_file` - takes two arguments, `name` and
+       `key_file_path`.  The base implementation calls
+       `import_key_pair_from_string`.
+
+    `import_key_pair_from_*()` is used to import the public part of a
+    key pair, whereas `create_key_pair()` is used to create the key pair
+    server-side and have it returned by the API.
+
+    However, some drivers (DigitalOcean, Packet and Vultr) don't
+    implement `import_key_pair_from_*()`.  Instead they use
+    `create_key_pair()` to import the public key.
+
+    Gah!
+    """
+    method = driver.import_key_pair_from_string
+
+    create_key_pair = inspect.signature(driver.create_key_pair).parameters
+    if "public_key" in create_key_pair:
+        method = driver.create_key_pair
+
+    *_, data = utils.read_public_key(kwargs["ssh_key"])
+    if not method(kwargs["name"], data):
+        raise click.ClickException("Import failed")
+
+    table.show([
+        ["ID", "id", "extra.id"],
+        ["Name", "name"],
+        ["Public key", "fingerprint", "pub_key"],
+    ], driver.list_key_pairs())
 
 
 @compute.command("destroy-node")

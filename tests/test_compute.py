@@ -1091,3 +1091,113 @@ class TestCreateNodeVultr(ClickTestCase):
                     base64.b64encode(b"#!/bin/bash\nwhoami\n").decode()
                 )
                 self.assertEqual(result.exit_code, 0)
+
+
+class TestImportKeyPair(ClickTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+        try:
+            get_driver("dummy-extended")
+        except AttributeError:
+            set_driver(
+                "dummy-extended",
+                "tests.helpers",
+                "ExtendedDummyNodeDriver",
+            )
+
+        self.config.write(
+            b"""
+            [role.dummy-ext]
+            provider = "dummy-extended"
+            key = "key-dummy"
+
+            [role.do]
+            provider = "digitalocean"
+            key = "key-do"
+            """
+        )
+        self.config.flush()
+
+    def test_import_success(self) -> None:
+        with tempfile.NamedTemporaryFile("w+") as tmp:
+            tmp.write("ssh-rsa data x")
+            tmp.flush()
+
+            args = [
+                "--config-file",
+                self.config.name,
+                "compute",
+                "import-key-pair",
+                "--role",
+                "dummy-ext",
+                "--name",
+                "name",
+                "--ssh-key",
+                tmp.name,
+            ]
+
+            result = self.runner.invoke(cli.cli, args)
+
+            self.assertEqual(result.exit_code, 0)
+
+    def test_create_success(self) -> None:
+        cls = "libcloud.compute.drivers.digitalocean.DigitalOceanNodeDriver"
+        driver = DigitalOceanDummyNodeDriver("")
+        with patch(cls) as mock:
+            mock.return_value = driver
+
+            with tempfile.NamedTemporaryFile("w+") as tmp:
+                tmp.write("ssh-rsa data x")
+                tmp.flush()
+
+                args = [
+                    "--config-file",
+                    self.config.name,
+                    "compute",
+                    "import-key-pair",
+                    "--role",
+                    "do",
+                    "--name",
+                    "name",
+                    "--ssh-key",
+                    tmp.name,
+                ]
+
+                self.assertEqual(len(driver.key_pairs), 2)
+                result = self.runner.invoke(cli.cli, args)
+                self.assertEqual(len(driver.key_pairs), 3)
+
+                self.assertEqual(
+                    driver.call_args["create_key_pair"]["public_key"],
+                    "ssh-rsa data x"
+                )
+                self.assertEqual(result.exit_code, 0)
+
+    def test_failure(self) -> None:
+        method = "libcloud.compute.drivers.dummy.DummyNodeDriver" \
+                 ".import_key_pair_from_string"
+        with patch(method) as mock:
+            mock.return_value = False
+
+            with tempfile.NamedTemporaryFile("w+") as tmp:
+                tmp.write("ssh-rsa data x")
+                tmp.flush()
+
+                args = [
+                    "--config-file",
+                    self.config.name,
+                    "compute",
+                    "import-key-pair",
+                    "--role",
+                    "dummy-ext",
+                    "--name",
+                    "name",
+                    "--ssh-key",
+                    tmp.name,
+                ]
+
+                result = self.runner.invoke(cli.cli, args)
+
+                self.assertEqual(result.output, "Error: Import failed\n")
+                self.assertNotEqual(result.exit_code, 0)
