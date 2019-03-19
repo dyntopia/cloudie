@@ -169,3 +169,42 @@ class TestCompute(ClickTestCase):
                 ", ".join(n.private_ips),
             ]
             self.assertTrue(row in t.rows)
+
+    def test_list_sizes(self) -> None:
+        args = [
+            "--config-file",
+            self.config.name,
+            "compute",
+            "list-sizes",
+            "--role",
+            "dummy-ext",
+        ]
+
+        t = TexttableMock()
+        with patch("texttable.Texttable") as mock:
+            mock.return_value = t
+            result = self.runner.invoke(cli.cli, args)
+            self.assertEqual(result.exit_code, 0)
+
+        headers = [
+            "ID",
+            "Name",
+            "VCPU(s)",
+            "RAM",
+            "Disk",
+            "Bandwidth",
+            "Price",
+        ]
+        self.assertEqual(t.headers, headers)
+
+        for s in ExtendedDummyNodeDriver("...").list_sizes():
+            row = [
+                s.id,
+                s.name,
+                "",
+                str(s.ram),
+                str(s.disk),
+                str(s.bandwidth),
+                str(s.price),
+            ]
+            self.assertTrue(row in t.rows)

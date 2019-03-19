@@ -49,3 +49,17 @@ def list_nodes(driver: BaseDriver) -> None:
         ["Public IP(s)", "public_ips"],
         ["Private IP(s)", "private_ips"],
     ], driver.list_nodes())
+
+
+@compute.command("list-sizes")
+@cloud.pass_driver(Provider)
+def list_sizes(driver: BaseDriver) -> None:
+    table.show([
+        ["ID", "id"],
+        ["Name", "name"],
+        ["VCPU(s)", "extra.vcpus"],
+        ["RAM", "ram"],
+        ["Disk", "disk"],
+        ["Bandwidth", "bandwidth"],
+        ["Price", "extra.price_monthly", "price"],
+    ], driver.list_sizes())
