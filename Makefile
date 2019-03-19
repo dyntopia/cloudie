@@ -3,14 +3,14 @@
 all:
 
 install:
-	pip3 install -r requirements/requirements.txt
+	pip3 install -r requirements/requirements.txt --no-binary :all:
 	./setup.py install
 
 install-dev:
-	pip3 install -r requirements/requirements.txt
-	pip3 install -r requirements/requirements-dev-1.txt
-	pip3 install -r requirements/requirements-dev-2.txt
-	pip3 install -r requirements/requirements-dev-3.txt
+	pip3 install -r requirements/requirements.txt --no-binary :all:
+	pip3 install -r requirements/requirements-dev-1.txt --no-binary :all:
+	pip3 install -r requirements/requirements-dev-2.txt --no-binary :all:
+	pip3 install -r requirements/requirements-dev-3.txt --no-binary :all:
 	./setup.py develop
 
 test:
