@@ -1,9 +1,9 @@
 import tempfile
 import unittest
-from typing import List
+from typing import Any, List
 
 import click.testing
-from libcloud.compute.base import KeyPair
+from libcloud.compute.base import KeyPair, Node
 from libcloud.compute.drivers.dummy import DummyNodeDriver
 from texttable import Texttable
 
@@ -30,6 +30,9 @@ class TexttableMock(Texttable):  # type: ignore
 
 class ExtendedDummyNodeDriver(DummyNodeDriver):  # type: ignore
     # pylint: disable=abstract-method
+    call_args = {}  # type: dict
+    features = {"create_node": ["password", "ssh_key"]}
+
     key_pairs = [
         KeyPair(
             name="name-1",
@@ -49,5 +52,9 @@ class ExtendedDummyNodeDriver(DummyNodeDriver):  # type: ignore
 
     def list_key_pairs(self) -> List[KeyPair]:
         return self.key_pairs
+
+    def create_node(self, **kwargs: Any) -> Node:
+        self.call_args["create_node"] = kwargs
+        return super().create_node(**kwargs)
 
     # pylint: enable=abstract-method
