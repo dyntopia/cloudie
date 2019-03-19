@@ -211,8 +211,11 @@ def _create_node_digitalocean(driver: BaseDriver, kwargs: Any) -> Munch:
     # feature, only a single key is processed here.
     ssh_key = kwargs.pop("ssh_key", None)
     if ssh_key:
-        _kind, _key, _comment, data = utils.read_public_key(ssh_key)
-        kp = _get(driver.list_key_pairs, lambda k: k.public_key == data)
+        kind, key, _comment, _data = utils.read_public_key(ssh_key)
+        kp = _get(
+            driver.list_key_pairs,
+            lambda k: k.public_key.split(" ")[:2] == [kind, key]
+        )
         kw.ex_create_attr.ssh_keys = [kp.fingerprint]
 
     return kw

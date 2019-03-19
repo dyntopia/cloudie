@@ -713,3 +713,34 @@ class TestCreateNodeDigitalOcean(ClickTestCase):
             self.assertEqual(ex["ssh_keys"], ["55:66:77:88"])
 
             self.assertEqual(result.exit_code, 0)
+
+    def test_existing_ssh_key_mismatch_comment(self) -> None:
+        with tempfile.NamedTemporaryFile("w+") as tmp:
+            tmp.write("ssh-rsa abcd m000")
+            tmp.flush()
+
+            do = "libcloud.compute.drivers.digitalocean.DigitalOceanNodeDriver"
+            driver = DigitalOceanDummyNodeDriver("")
+            with patch(do) as mock:
+                mock.return_value = driver
+                args = [
+                    "--config-file",
+                    self.config.name,
+                    "compute",
+                    "create-node",
+                    "--role",
+                    "do-with-ssh-key",
+                    "--name",
+                    "name",
+                    "--ssh-key",
+                    tmp.name,
+                ]
+
+                result = self.runner.invoke(cli.cli, args)
+
+                self.assertIsNone(driver.call_args.get("create_key_pair"))
+
+                ex = driver.call_args["create_node"]["ex_create_attr"]
+                self.assertEqual(ex["ssh_keys"], ["55:66:77:88"])
+
+                self.assertEqual(result.exit_code, 0)
