@@ -1,6 +1,7 @@
 from typing import Any
 
 import click
+from libcloud.common.exceptions import BaseHTTPError
 from libcloud.common.types import InvalidCredsError
 
 
@@ -16,5 +17,5 @@ class Group(click.Group):
     def invoke(self, ctx: click.Context) -> Any:
         try:
             return super().invoke(ctx)
-        except (NotImplementedError, InvalidCredsError) as e:
+        except (NotImplementedError, BaseHTTPError, InvalidCredsError) as e:
             raise click.ClickException(str(e))
