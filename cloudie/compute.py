@@ -201,15 +201,15 @@ def create_node(driver: BaseDriver, **kwargs: Any) -> None:
     ], [n for n, _ in driver.wait_until_running([node], timeout=wait)])
 
 
-def _get(func: Callable, pred: Callable) -> Any:
+def _get(func: Callable, pred: Callable, no_error: bool = False) -> Any:
     """
     Retrieve the first instance from `func` that matches `pred`.
     """
     value = next((elm for elm in func() if pred(elm)), None)
-    if not value:
-        name = func.__name__.replace("list_", "").replace("_", "-").rstrip("s")
-        raise click.ClickException("invalid {}".format(name))
-    return value
+    if value or no_error:
+        return value
+    name = func.__name__.replace("list_", "").replace("_", "-").rstrip("s")
+    raise click.ClickException("invalid {}".format(name))
 
 
 def _create_node_digitalocean(driver: BaseDriver, kwargs: Any) -> Munch:

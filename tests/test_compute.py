@@ -633,6 +633,12 @@ class TestGet(ClickTestCase):
         with self.assertRaises(click.exceptions.ClickException):
             compute._get(self.driver.list_images, lambda x: None)
 
+    def test_no_error(self) -> None:
+        self.assertEqual(
+            None,
+            compute._get(self.driver.list_images, lambda x: None, True),
+        )
+
     def test_image_by_id(self) -> None:
         result = compute._get(self.driver.list_images, lambda x: x.id == "2")
         self.assertEqual(result.id, "2")
