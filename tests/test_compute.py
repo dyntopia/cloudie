@@ -1,3 +1,5 @@
+# pylint: disable=too-many-lines
+import base64
 import tempfile
 from unittest.mock import patch
 
@@ -958,4 +960,59 @@ class TestCreateNodeVultr(ClickTestCase):
                 ssh_keys = driver.call_args["create_node"]["ex_ssh_key_ids"]
                 self.assertEqual(ssh_keys, ["1"])
 
+                self.assertEqual(result.exit_code, 0)
+
+    def test_no_user_data(self) -> None:
+        vultr = "libcloud.compute.drivers.vultr.VultrNodeDriver"
+        driver = VultrDummyNodeDriver("")
+
+        with patch(vultr) as mock:
+            mock.return_value = driver
+            args = [
+                "--config-file",
+                self.config.name,
+                "compute",
+                "create-node",
+                "--role",
+                "vultr",
+                "--name",
+                "name",
+            ]
+
+            result = self.runner.invoke(cli.cli, args)
+
+            attr = driver.call_args["create_node"]["ex_create_attr"]
+            self.assertIsNone(attr.get("userdata"))
+            self.assertEqual(result.exit_code, 0)
+
+    def test_user_data(self) -> None:
+        with tempfile.NamedTemporaryFile("w+") as tmp:
+            tmp.write("#!/bin/bash\nwhoami\n")
+            tmp.flush()
+
+            vultr = "libcloud.compute.drivers.vultr.VultrNodeDriver"
+            driver = VultrDummyNodeDriver("")
+
+            with patch(vultr) as mock:
+                mock.return_value = driver
+                args = [
+                    "--config-file",
+                    self.config.name,
+                    "compute",
+                    "create-node",
+                    "--role",
+                    "vultr",
+                    "--name",
+                    "name",
+                    "--user-data",
+                    tmp.name,
+                ]
+
+                result = self.runner.invoke(cli.cli, args)
+
+                attr = driver.call_args["create_node"]["ex_create_attr"]
+                self.assertEqual(
+                    attr["userdata"],
+                    base64.b64encode(b"#!/bin/bash\nwhoami\n").decode()
+                )
                 self.assertEqual(result.exit_code, 0)

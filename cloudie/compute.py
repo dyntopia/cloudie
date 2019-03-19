@@ -1,5 +1,6 @@
 from . import security  # isort:skip, pylint:disable=C0411,I0021
 
+import base64
 from typing import Any, Callable
 
 import click
@@ -235,7 +236,7 @@ def _create_node_vultr(driver: BaseDriver, kwargs: Any) -> Munch:
     """
     Process arguments for Vultr.
     """
-    kw = Munch()
+    kw = Munch(ex_create_attr=Munch())
 
     # A list of string IDs is accepted.  However, to be consistent with the
     # `ssh_key` feature, only a single key is processed here.
@@ -247,5 +248,11 @@ def _create_node_vultr(driver: BaseDriver, kwargs: Any) -> Munch:
             lambda k: k.pub_key.split(" ")[:2] == [kind, key]
         )
         kw.ex_ssh_key_ids = [kp.id]
+
+    # A string with base64-encoded cloud-init data is accepted.
+    user_data = kwargs.pop("user_data", None)
+    if user_data:
+        content = user_data.read().encode()
+        kw.ex_create_attr.userdata = base64.b64encode(content).decode()
 
     return kw
