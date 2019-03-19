@@ -53,6 +53,7 @@ def pass_driver(driver_type: object) -> Callable:
             "--role",
             "driver",
             type=str,
+            is_eager=True,
             callback=instantiate,
         )(f)
 
