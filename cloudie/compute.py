@@ -196,6 +196,7 @@ def destroy_node(driver: BaseDriver, **kwargs: Any) -> None:
 @option.add("--ssh-key", type=click.File("r"))
 @option.add("--password", is_flag=True)
 @option.add("--user-data", type=click.File("r"))
+@option.add("--script-id", type=int)
 @option.add("--wait", default=600)
 @option.pass_driver(Provider)
 def create_node(driver: BaseDriver, **kwargs: Any) -> None:
@@ -368,5 +369,10 @@ def _create_node_vultr(driver: BaseDriver, kwargs: Any) -> Munch:
     if user_data:
         content = user_data.read().encode()
         kw.ex_create_attr.userdata = base64.b64encode(content).decode()
+
+    # An integer ID for a startup script is accepted.
+    script_id = kwargs.pop("script_id", None)
+    if script_id:
+        kw.ex_create_attr.script_id = script_id
 
     return kw

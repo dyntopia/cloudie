@@ -1091,6 +1091,54 @@ class TestCreateNodeVultr(ClickTestCase):
                 )
                 self.assertEqual(result.exit_code, 0)
 
+    def test_no_script_id(self) -> None:
+        vultr = "libcloud.compute.drivers.vultr.VultrNodeDriver"
+        driver = VultrDummyNodeDriver("")
+
+        with patch(vultr) as mock:
+            mock.return_value = driver
+            args = [
+                "--config-file",
+                self.config.name,
+                "compute",
+                "create-node",
+                "--role",
+                "vultr",
+                "--name",
+                "name",
+            ]
+
+            result = self.runner.invoke(cli.cli, args)
+
+            attr = driver.call_args["create_node"]["ex_create_attr"]
+            self.assertIsNone(attr.get("script_id"))
+            self.assertEqual(result.exit_code, 0)
+
+    def test_script_id(self) -> None:
+        vultr = "libcloud.compute.drivers.vultr.VultrNodeDriver"
+        driver = VultrDummyNodeDriver("")
+
+        with patch(vultr) as mock:
+            mock.return_value = driver
+            args = [
+                "--config-file",
+                self.config.name,
+                "compute",
+                "create-node",
+                "--role",
+                "vultr",
+                "--name",
+                "name",
+                "--script-id",
+                "321",
+            ]
+
+            result = self.runner.invoke(cli.cli, args)
+
+            attr = driver.call_args["create_node"]["ex_create_attr"]
+            self.assertEqual(attr.get("script_id"), 321)
+            self.assertEqual(result.exit_code, 0)
+
 
 class TestImportKeyPair(ClickTestCase):
     def setUp(self) -> None:
