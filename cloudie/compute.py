@@ -80,6 +80,7 @@ def list_sizes(driver: BaseDriver) -> None:
 @option.add("--location", required=True)
 @option.add("--ssh-key", type=click.File("r"))
 @option.add("--password", is_flag=True)
+@option.add("--wait", default=600)
 @option.pass_driver(Provider)
 def create_node(driver: BaseDriver, **kwargs: Any) -> None:
     """
@@ -159,6 +160,9 @@ def create_node(driver: BaseDriver, **kwargs: Any) -> None:
             )
             kw.auth = NodeAuthPassword(value)  # pylint: disable=R0204
 
+    # Arguments local to this function.
+    wait = kwargs.pop("wait")
+
     # Bail there are any unprocessed arguments.
     args = ["--{}".format(k.replace("_", "-")) for k, v in kwargs.items() if v]
     if args:
@@ -167,6 +171,9 @@ def create_node(driver: BaseDriver, **kwargs: Any) -> None:
         )
 
     # And finally, create the node.
+    node = driver.create_node(**kw)
+
+    click.echo("Waiting for the node to come online...")
     table.show([
         ["UUID", "uuid"],
         ["Name", "name"],
@@ -174,7 +181,7 @@ def create_node(driver: BaseDriver, **kwargs: Any) -> None:
         ["Public IP(s)", "public_ips"],
         ["Private IP(s)", "private_ips"],
         ["Password", "extra.password"],
-    ], [driver.create_node(**kw)])
+    ], [n for n, _ in driver.wait_until_running([node], timeout=wait)])
 
 
 def _get(func: Callable, pred: Callable) -> Any:
