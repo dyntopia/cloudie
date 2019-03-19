@@ -8,7 +8,7 @@ from libcloud.compute.deployment import SSHKeyDeployment
 from libcloud.compute.providers import Provider, get_driver, set_driver
 from libcloud.compute.types import DeploymentError
 
-from cloudie import cli, cloud, compute
+from cloudie import cli, compute, option
 
 from .helpers import ClickTestCase, ExtendedDummyNodeDriver, TexttableMock
 
@@ -45,7 +45,7 @@ class TestCompute(ClickTestCase):
         """
 
         @compute.compute.command("deploy")
-        @cloud.pass_driver(Provider)
+        @option.pass_driver(Provider)
         def command(driver: BaseDriver) -> None:
             orig_paramiko = ssh.have_paramiko
             ssh.have_paramiko = True

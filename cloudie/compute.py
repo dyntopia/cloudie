@@ -8,7 +8,7 @@ from libcloud.compute.base import NodeAuthPassword, NodeAuthSSHKey
 from libcloud.compute.providers import Provider
 from munch import DefaultMunch
 
-from . import cloud, option, table
+from . import option, table
 
 assert security  # to make pyflakes happy
 
@@ -19,7 +19,7 @@ def compute() -> None:
 
 
 @compute.command("list-images")
-@cloud.pass_driver(Provider)
+@option.pass_driver(Provider)
 def list_images(driver: BaseDriver) -> None:
     table.show([
         ["ID", "id"],
@@ -28,7 +28,7 @@ def list_images(driver: BaseDriver) -> None:
 
 
 @compute.command("list-key-pairs")
-@cloud.pass_driver(Provider)
+@option.pass_driver(Provider)
 def list_key_pairs(driver: BaseDriver) -> None:
     table.show([
         ["ID", "id", "extra.id"],
@@ -38,7 +38,7 @@ def list_key_pairs(driver: BaseDriver) -> None:
 
 
 @compute.command("list-locations")
-@cloud.pass_driver(Provider)
+@option.pass_driver(Provider)
 def list_locations(driver: BaseDriver) -> None:
     table.show([
         ["ID", "id"],
@@ -48,7 +48,7 @@ def list_locations(driver: BaseDriver) -> None:
 
 
 @compute.command("list-nodes")
-@cloud.pass_driver(Provider)
+@option.pass_driver(Provider)
 def list_nodes(driver: BaseDriver) -> None:
     table.show([
         ["ID", "id"],
@@ -60,7 +60,7 @@ def list_nodes(driver: BaseDriver) -> None:
 
 
 @compute.command("list-sizes")
-@cloud.pass_driver(Provider)
+@option.pass_driver(Provider)
 def list_sizes(driver: BaseDriver) -> None:
     table.show([
         ["ID", "id"],
@@ -80,7 +80,7 @@ def list_sizes(driver: BaseDriver) -> None:
 @option.add("--location", required=True)
 @option.add("--ssh-key")
 @option.add("--password", is_flag=True)
-@cloud.pass_driver(Provider)
+@option.pass_driver(Provider)
 def create_node(driver: BaseDriver, **kwargs: Any) -> None:
     """
     Create a new node.
