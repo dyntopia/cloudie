@@ -48,6 +48,80 @@ class TestPassDriver(ClickTestCase):
         self.assertEqual(result.output, "Dummy Node Provider - abcd\n")
         self.assertEqual(result.exit_code, 0)
 
+    def test_unspecified_role(self) -> None:
+        @cli.cli.command()
+        @cloud.pass_driver(ComputeProvider)
+        def command(_driver: BaseDriver) -> None:
+            pass
+
+        self.config.write(b"[role.xy]\nprovider='dummy'\nkey='abcd'\n")
+        self.config.flush()
+
+        args = ["--config-file", self.config.name, command.name]
+        result = self.runner.invoke(cli.cli, args)
+
+        self.assertEqual(
+            result.output,
+            "Error: missing --role and role.default\n",
+        )
+        self.assertNotEqual(result.exit_code, 0)
+
+    def test_default_role(self) -> None:
+        @cli.cli.command()
+        @cloud.pass_driver(ComputeProvider)
+        def command(driver: BaseDriver) -> None:
+            print("{} - {}".format(driver.name, driver.creds))
+
+        self.config.write(
+            b"""
+            [role]\n
+            default = "xy"
+
+            [role.x]
+            provider="dummy"
+            key="ijkl"
+
+            [role.xy]
+            provider="dummy"
+            key="abcd"
+            """
+        )
+        self.config.flush()
+
+        args = ["--config-file", self.config.name, command.name]
+        result = self.runner.invoke(cli.cli, args)
+
+        self.assertEqual(result.output, "Dummy Node Provider - abcd\n")
+        self.assertEqual(result.exit_code, 0)
+
+    def test_override_default_role(self) -> None:
+        @cli.cli.command()
+        @cloud.pass_driver(ComputeProvider)
+        def command(driver: BaseDriver) -> None:
+            print("{} - {}".format(driver.name, driver.creds))
+
+        self.config.write(
+            b"""
+            [role]\n
+            default = "xy"
+
+            [role.x]
+            provider="dummy"
+            key="ijkl"
+
+            [role.xy]
+            provider="dummy"
+            key="abcd"
+            """
+        )
+        self.config.flush()
+
+        args = ["--config-file", self.config.name, command.name, "--role", "x"]
+        result = self.runner.invoke(cli.cli, args)
+
+        self.assertEqual(result.output, "Dummy Node Provider - ijkl\n")
+        self.assertEqual(result.exit_code, 0)
+
     def test_missing_role(self) -> None:
         @cli.cli.command()
         @cloud.pass_driver(ComputeProvider)

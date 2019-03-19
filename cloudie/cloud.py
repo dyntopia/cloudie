@@ -1,5 +1,5 @@
 import inspect
-from typing import Any, Callable, Union
+from typing import Any, Callable, Optional, Union
 
 import click
 import libcloud
@@ -9,11 +9,15 @@ def pass_driver(driver_type: object) -> Callable:
     def instantiate(
             ctx: click.Context,
             _param: Union[click.Option, click.Parameter],
-            role: str,
+            role: Optional[str],
     ) -> Any:
         """
-        Instantiate the driver associated with `--role`.
+        Instantiate the driver associated the role.
         """
+        role = role or ctx.obj.config.get("role", {}).get("default")
+        if not role:
+            raise click.ClickException("missing --role and role.default")
+
         try:
             config = ctx.obj.config.role[role]
             provider = config.provider
@@ -50,7 +54,6 @@ def pass_driver(driver_type: object) -> Callable:
             "driver",
             type=str,
             callback=instantiate,
-            required=True,
         )(f)
 
     return decorator
