@@ -2,7 +2,7 @@ from typing import Any
 
 import click
 from libcloud.common.exceptions import BaseHTTPError
-from libcloud.common.types import InvalidCredsError
+from libcloud.common.types import LibcloudError
 
 
 class Group(click.Group):
@@ -17,5 +17,7 @@ class Group(click.Group):
     def invoke(self, ctx: click.Context) -> Any:
         try:
             return super().invoke(ctx)
-        except (NotImplementedError, BaseHTTPError, InvalidCredsError) as e:
+        except LibcloudError as e:
+            raise click.ClickException(e.value)
+        except (BaseHTTPError, NotImplementedError) as e:
             raise click.ClickException(str(e))

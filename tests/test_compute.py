@@ -8,7 +8,6 @@ from libcloud.common.base import BaseDriver
 from libcloud.compute import ssh
 from libcloud.compute.deployment import SSHKeyDeployment
 from libcloud.compute.providers import Provider, get_driver, set_driver
-from libcloud.compute.types import DeploymentError
 
 from cloudie import cli, compute, option
 
@@ -70,8 +69,8 @@ class TestCompute(ClickTestCase):
             "dummy",
         ]
         result = self.runner.invoke(cli.cli, args)
-        self.assertEqual(type(result.exception), DeploymentError)
-        self.assertEqual(str(result.exception.value), "ssh module is disabled")
+        self.assertEqual(type(result.exception), SystemExit)
+        self.assertTrue("ssh module is disabled" in result.output)
         self.assertNotEqual(result.exit_code, 0)
 
     def test_list_images(self) -> None:
