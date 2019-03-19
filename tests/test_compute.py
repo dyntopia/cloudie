@@ -10,7 +10,10 @@ from libcloud.compute.types import DeploymentError
 
 from cloudie import cli, compute, option
 
-from .helpers import ClickTestCase, ExtendedDummyNodeDriver, TexttableMock
+from .helpers import (
+    ClickTestCase, DigitalOceanDummyNodeDriver, ExtendedDummyNodeDriver,
+    TexttableMock
+)
 
 
 class TestCompute(ClickTestCase):
@@ -592,3 +595,121 @@ class TestGet(ClickTestCase):
         self.assertEqual(result.name, "Small")
 
     # pylint: enable=protected-access
+
+
+class TestCreateNodeDigitalOcean(ClickTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.ssh_key_1 = tempfile.NamedTemporaryFile("w+")
+        self.ssh_key_1.write("ssh-rsa h0h0 blargh")
+        self.ssh_key_1.flush()
+
+        self.ssh_key_2 = tempfile.NamedTemporaryFile("w+")
+        self.ssh_key_2.write("ssh-rsa abcd second")
+        self.ssh_key_2.flush()
+
+        self.config.write(
+            """
+            [role.do]
+            provider = "digitalocean"
+            key = ""
+            image = 1
+            location = 2
+            size = 2
+
+            [role.do-with-ssh-key]
+            provider = "digitalocean"
+            key = ""
+            image = 1
+            location = 2
+            size = 2
+            ssh-key = "{ssh_key_1}"
+            """.format(ssh_key_1=self.ssh_key_1.name).encode("ascii")
+        )
+        self.config.flush()
+
+    def tearDown(self) -> None:
+        super().tearDown()
+        self.ssh_key_1.close()
+        self.ssh_key_2.close()
+
+    def test_no_ssh_key(self) -> None:
+        do = "libcloud.compute.drivers.digitalocean.DigitalOceanNodeDriver"
+        driver = DigitalOceanDummyNodeDriver("")
+        with patch(do) as mock:
+            mock.return_value = driver
+            args = [
+                "--config-file",
+                self.config.name,
+                "compute",
+                "create-node",
+                "--role",
+                "do",
+                "--name",
+                "name",
+            ]
+
+            result = self.runner.invoke(cli.cli, args)
+
+            self.assertIsNone(driver.call_args.get("create_key_pair"))
+            self.assertEqual(
+                driver.call_args["create_node"]["ex_create_attr"],
+                {},
+            )
+
+            self.assertEqual(result.exit_code, 0)
+
+    def test_nonexistent_ssh_key(self) -> None:
+        do = "libcloud.compute.drivers.digitalocean.DigitalOceanNodeDriver"
+        driver = DigitalOceanDummyNodeDriver("")
+        with patch(do) as mock:
+            mock.return_value = driver
+            args = [
+                "--config-file",
+                self.config.name,
+                "compute",
+                "create-node",
+                "--role",
+                "do-with-ssh-key",
+                "--name",
+                "name",
+            ]
+
+            result = self.runner.invoke(cli.cli, args)
+
+            self.assertIsNone(driver.call_args.get("create_key_pair"))
+            self.assertEqual(
+                driver.call_args["create_node"]["ex_create_attr"],
+                {},
+            )
+
+            self.assertEqual(result.output, "Error: invalid key-pair\n")
+            self.assertNotEqual(result.exit_code, 0)
+
+    def test_existing_ssh_key(self) -> None:
+        do = "libcloud.compute.drivers.digitalocean.DigitalOceanNodeDriver"
+        driver = DigitalOceanDummyNodeDriver("")
+        with patch(do) as mock:
+            mock.return_value = driver
+            args = [
+                "--config-file",
+                self.config.name,
+                "compute",
+                "create-node",
+                "--role",
+                "do-with-ssh-key",
+                "--name",
+                "name",
+                "--ssh-key",
+                self.ssh_key_2.name,
+            ]
+
+            result = self.runner.invoke(cli.cli, args)
+
+            self.assertIsNone(driver.call_args.get("create_key_pair"))
+
+            ex = driver.call_args["create_node"]["ex_create_attr"]
+            self.assertEqual(ex["ssh_keys"], ["55:66:77:88"])
+
+            self.assertEqual(result.exit_code, 0)

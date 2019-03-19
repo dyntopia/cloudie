@@ -6,7 +6,7 @@ import click
 from libcloud.common.base import BaseDriver
 from libcloud.compute.base import NodeAuthPassword, NodeAuthSSHKey
 from libcloud.compute.providers import Provider
-from munch import DefaultMunch
+from munch import DefaultMunch, Munch
 
 from . import option, table, utils
 
@@ -160,6 +160,11 @@ def create_node(driver: BaseDriver, **kwargs: Any) -> None:
             )
             kw.auth = NodeAuthPassword(value)  # pylint: disable=R0204
 
+    # Process arguments specific to individual drivers.
+    func = globals().get("_create_node_{}".format(driver.type), None)
+    if func:
+        kw.update(func(driver, kwargs))
+
     # Arguments local to this function.
     wait = kwargs.pop("wait")
 
@@ -193,3 +198,21 @@ def _get(func: Callable, pred: Callable) -> Any:
         name = func.__name__.replace("list_", "").replace("_", "-").rstrip("s")
         raise click.ClickException("invalid {}".format(name))
     return value
+
+
+def _create_node_digitalocean(driver: BaseDriver, kwargs: Any) -> Munch:
+    """
+    Process arguments for DigitalOcean.
+    """
+    kw = Munch(ex_create_attr=Munch())
+
+    # A list of either integer IDs or string fingerprints is accepted by
+    # DigitalOcean.  However, to be consistent with the `ssh_key`
+    # feature, only a single key is processed here.
+    ssh_key = kwargs.pop("ssh_key", None)
+    if ssh_key:
+        _comment, data = utils.read_public_key(ssh_key)
+        kp = _get(driver.list_key_pairs, lambda k: k.public_key == data)
+        kw.ex_create_attr.ssh_keys = [kp.fingerprint]
+
+    return kw
