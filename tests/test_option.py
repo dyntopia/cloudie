@@ -1,6 +1,7 @@
 from typing import Any
 from unittest.mock import patch
 
+import click
 from libcloud.common.base import BaseDriver
 from libcloud.compute.providers import Provider as ComputeProvider
 from libcloud.dns.providers import Provider as DNSProvider
@@ -20,6 +21,19 @@ class TestOption(ClickTestCase):
             provider = "dummy"
             key = "..."
             config-str = "aaa"
+            config-bool-true = true
+            config-bool-false = false
+            config-int-to-str = 321
+            config-str-to-int = "123"
+            config-float-to-str = 7.89
+            config-str-to-float = "7.89"
+            config-multiple-empty = []
+            config-multiple-str = ["aa", "bb"]
+            config-multiple-int = [987, 567]
+            config-multiple-int-to-str = [987, 567]
+            config-fname-one = 1
+            config-fname-two = "2"
+            config-fname-multiple = [3, 4]
             config-override-default-int = "123"
             config-override-default-str = "ccc"
             config-override-default-callable = "no-call"
@@ -28,11 +42,58 @@ class TestOption(ClickTestCase):
         )
         self.config.flush()
 
+    def test_file(self) -> None:
+        with self.runner.isolated_filesystem():
+            for fname in ["1", "2", "3", "4"]:
+                with open(fname, "w") as f:
+                    f.write(fname * 3)
+
+            kw = Munch()
+
+            @cli.cli.command()
+            @option.add("--config-fname-one", type=click.File("r"))
+            @option.add("--config-fname-two", type=click.File("rb"))
+            @option.add(
+                "--config-fname-multiple", type=click.File("r"), multiple=True
+            )
+            @option.pass_driver(ComputeProvider)
+            def command(**kwargs: Any) -> None:
+                nonlocal kw
+                kw.one = kwargs["config_fname_one"].read()
+                kw.two = kwargs["config_fname_two"].read()
+                kw.three = kwargs["config_fname_multiple"][0].read()
+                kw.four = kwargs["config_fname_multiple"][1].read()
+
+            args = [
+                "--config-file",
+                self.config.name,
+                command.name,
+                "--role",
+                "name",
+            ]
+            result = self.runner.invoke(cli.cli, args)
+
+            self.assertEqual(kw.one, "111")
+            self.assertEqual(kw.two, b"222")
+            self.assertEqual(kw.three, "333")
+            self.assertEqual(kw.four, "444")
+            self.assertEqual(result.exit_code, 0)
+
     def test_combination(self) -> None:
         kw = Munch()
 
         @cli.cli.command()
         @option.add("--config-str", required=True)
+        @option.add("--config-bool-true", required=True, type=bool)
+        @option.add("--config-bool-false", required=True, type=bool)
+        @option.add("--config-int-to-str", required=True)
+        @option.add("--config-str-to-int", required=True, type=int)
+        @option.add("--config-float-to-str", required=True)
+        @option.add("--config-str-to-float", required=True, type=float)
+        @option.add("--config-multiple-empty", multiple=True)
+        @option.add("--config-multiple-str", multiple=True)
+        @option.add("--config-multiple-int", multiple=True, type=int)
+        @option.add("--config-multiple-int-to-str", multiple=True)
         @option.add("--config-override-default-int", type=int, default=1)
         @option.add("--config-override-default-str", default="x")
         @option.add("--config-override-default-callable", default=lambda: "x")
@@ -57,6 +118,36 @@ class TestOption(ClickTestCase):
 
         self.assertIsInstance(kw.config_str, str)
         self.assertEqual(kw.config_str, "aaa")
+
+        self.assertIsInstance(kw.config_bool_true, bool)
+        self.assertEqual(kw.config_bool_true, True)
+
+        self.assertIsInstance(kw.config_bool_false, bool)
+        self.assertEqual(kw.config_bool_false, False)
+
+        self.assertIsInstance(kw.config_int_to_str, str)
+        self.assertEqual(kw.config_int_to_str, "321")
+
+        self.assertIsInstance(kw.config_str_to_int, int)
+        self.assertEqual(kw.config_str_to_int, 123)
+
+        self.assertIsInstance(kw.config_float_to_str, str)
+        self.assertEqual(kw.config_float_to_str, "7.89")
+
+        self.assertIsInstance(kw.config_str_to_float, float)
+        self.assertEqual(kw.config_str_to_float, 7.89)
+
+        self.assertIsInstance(kw.config_multiple_empty, tuple)
+        self.assertEqual(kw.config_multiple_empty, ())
+
+        self.assertIsInstance(kw.config_multiple_str, tuple)
+        self.assertEqual(kw.config_multiple_str, ("aa", "bb"))
+
+        self.assertIsInstance(kw.config_multiple_int, tuple)
+        self.assertEqual(kw.config_multiple_int, (987, 567))
+
+        self.assertIsInstance(kw.config_multiple_int_to_str, tuple)
+        self.assertEqual(kw.config_multiple_int_to_str, ("987", "567"))
 
         self.assertIsInstance(kw.config_override_default_int, int)
         self.assertEqual(kw.config_override_default_int, 123)

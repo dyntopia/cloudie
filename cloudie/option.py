@@ -11,22 +11,20 @@ class Option(click.Option):
         Retrieve the default value.
 
         The value is retrieved from the configuration for the current
-        role.  If this fails, `default` is used.
+        role.  If this fails, the super method is used.
         """
-        rv = self._get_config_default(ctx) or self.default
-        if callable(rv):
-            rv = rv()
-
-        # Strings don't seem to be converted by `type_cast_value()`.
-        if rv and self.type == click.STRING:
-            return str(rv)
-        return self.type_cast_value(ctx, rv)
-
-    def _get_config_default(self, ctx: click.Context) -> Any:
         try:
-            return ctx.obj.role[self.name.replace("_", "-")]
+            value = ctx.obj.role[self.name.replace("_", "-")]
         except (AttributeError, KeyError):
-            return None
+            return super().get_default(ctx)
+
+        # For strings, `StringParamType` only cares for instances of
+        # bytes -- which makes sense since command-line arguments are
+        # strings already.  However, configuration values may not be
+        # strings.
+        if self.multiple:
+            return self.type_cast_value(ctx, (str(x) for x in value))
+        return self.type_cast_value(ctx, str(value))
 
 
 def add(*param_decls: str, **attrs: Any) -> Callable:
