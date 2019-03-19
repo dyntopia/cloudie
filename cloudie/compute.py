@@ -78,7 +78,7 @@ def list_sizes(driver: BaseDriver) -> None:
 @option.add("--size", required=True)
 @option.add("--image", required=True)
 @option.add("--location", required=True)
-@option.add("--ssh-key")
+@option.add("--ssh-key", type=click.File("r"))
 @option.add("--password", is_flag=True)
 @option.pass_driver(Provider)
 def create_node(driver: BaseDriver, **kwargs: Any) -> None:
@@ -147,13 +147,7 @@ def create_node(driver: BaseDriver, **kwargs: Any) -> None:
     if "ssh_key" in features:
         ssh_key = kwargs.pop("ssh_key")
         if ssh_key:
-            try:
-                with open(ssh_key, "r") as f:
-                    kw.auth = NodeAuthSSHKey(f.read())
-            except OSError as e:
-                raise click.ClickException(
-                    "{}: {}".format(e.filename, e.strerror)
-                )
+            kw.auth = NodeAuthSSHKey(ssh_key.read())
 
     if "password" in features and not kw.auth:
         password = kwargs.pop("password")

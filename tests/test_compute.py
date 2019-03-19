@@ -276,26 +276,27 @@ class TestCreateNode(ClickTestCase):
         self.ssh_key.close()
 
     def test_conflicting_arguments(self) -> None:
-        args = [
-            "--config-file",
-            self.config.name,
-            "compute",
-            "create-node",
-            "--role",
-            "dummy-ext-with-required-options",
-            "--name",
-            "name",
-            "--ssh-key",
-            "x",
-            "--password",
-        ]
-        result = self.runner.invoke(cli.cli, args)
+        with tempfile.NamedTemporaryFile() as tmp:
+            args = [
+                "--config-file",
+                self.config.name,
+                "compute",
+                "create-node",
+                "--role",
+                "dummy-ext-with-required-options",
+                "--name",
+                "name",
+                "--ssh-key",
+                tmp.name,
+                "--password",
+            ]
+            result = self.runner.invoke(cli.cli, args)
 
-        self.assertEqual(
-            result.output,
-            "Error: Use either --ssh-key or --password\n",
-        )
-        self.assertNotEqual(result.exit_code, 0)
+            self.assertEqual(
+                result.output,
+                "Error: Use either --ssh-key or --password\n",
+            )
+            self.assertNotEqual(result.exit_code, 0)
 
     def test_missing_required_args(self) -> None:
         required = ["--name", "--image", "--location", "--size"]
@@ -403,10 +404,7 @@ class TestCreateNode(ClickTestCase):
 
         result = self.runner.invoke(cli.cli, args)
 
-        self.assertEqual(
-            result.output,
-            "Error: {}: No such file or directory\n".format(tmp.name),
-        )
+        self.assertTrue("No such file or directory" in result.output)
         self.assertNotEqual(result.exit_code, 0)
 
     def test_feature_ssh_key_from_arg(self) -> None:
