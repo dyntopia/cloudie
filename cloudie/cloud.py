@@ -19,12 +19,12 @@ def pass_driver(driver_type: object) -> Callable:
             raise click.ClickException("missing --role and role.default")
 
         try:
-            config = ctx.obj.config.role[role]
-            provider = config.provider
-            key = config.key
+            ctx.obj.role = ctx.obj.config.role[role]
+            provider = ctx.obj.role.provider
+            key = ctx.obj.role.key
             other = {
                 k: v
-                for k, v in config.items()
+                for k, v in ctx.obj.role.items()
                 if k not in ["provider", "key"]
             }
         except KeyError:
