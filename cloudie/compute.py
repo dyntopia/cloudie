@@ -74,6 +74,16 @@ def list_sizes(driver: BaseDriver) -> None:
     ], driver.list_sizes())
 
 
+@compute.command("destroy-node")
+@option.add("--id", required=True)
+@option.pass_driver(Provider)
+def destroy_node(driver: BaseDriver, **kwargs: Any) -> None:
+    node = _get(driver.list_nodes, lambda n: n.id == kwargs["id"])
+    if not driver.destroy_node(node):
+        raise click.ClickException("could not destroy node")
+    click.echo("Node {name} ({id}) destroyed".format(**node.__dict__))
+
+
 @compute.command("create-node")
 @option.add("--name", required=True)
 @option.add("--size", required=True)

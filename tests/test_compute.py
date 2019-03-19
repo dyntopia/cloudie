@@ -217,6 +217,75 @@ class TestCompute(ClickTestCase):
             self.assertTrue(row in t.rows)
 
 
+class TestDestroyNode(ClickTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.config.write(
+            b"""
+            [role.dummy]
+            provider = "dummy"
+            key = "key-dummy"
+            """
+        )
+        self.config.flush()
+
+    def test_success(self) -> None:
+        args = [
+            "--config-file",
+            self.config.name,
+            "compute",
+            "destroy-node",
+            "--role",
+            "dummy",
+            "--id",
+            "1",
+        ]
+
+        result = self.runner.invoke(cli.cli, args)
+
+        self.assertEqual(result.output, "Node dummy-1 (1) destroyed\n")
+        self.assertEqual(result.exit_code, 0)
+
+    def test_invalid_id(self) -> None:
+        args = [
+            "--config-file",
+            self.config.name,
+            "compute",
+            "destroy-node",
+            "--role",
+            "dummy",
+            "--id",
+            "99",
+        ]
+
+        result = self.runner.invoke(cli.cli, args)
+
+        self.assertEqual(result.output, "Error: invalid node\n")
+        self.assertNotEqual(result.exit_code, 0)
+
+    def test_invalid_retval(self) -> None:
+        cls = "libcloud.compute.drivers.dummy.DummyNodeDriver.destroy_node"
+        with patch(cls) as mock:
+            mock.return_value = False
+
+            args = [
+                "--config-file",
+                self.config.name,
+                "compute",
+                "destroy-node",
+                "--role",
+                "dummy",
+                "--id",
+                "1",
+            ]
+
+            result = self.runner.invoke(cli.cli, args)
+
+            self.assertEqual(result.output, "Error: could not destroy node\n")
+            self.assertNotEqual(result.exit_code, 0)
+
+
 class TestCreateNode(ClickTestCase):
     def setUp(self) -> None:
         super().setUp()
