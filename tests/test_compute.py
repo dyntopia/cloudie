@@ -12,7 +12,7 @@ from cloudie import cli, compute, option
 
 from .helpers import (
     ClickTestCase, DigitalOceanDummyNodeDriver, ExtendedDummyNodeDriver,
-    TexttableMock
+    TexttableMock, VultrDummyNodeDriver
 )
 
 
@@ -823,3 +823,139 @@ class TestCreateNodeDigitalOcean(ClickTestCase):
 
                 self.assertTrue("is larger than 64 KiB" in result.output)
                 self.assertNotEqual(result.exit_code, 0)
+
+
+class TestCreateNodeVultr(ClickTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.config.write(
+            b"""
+            [role.vultr]
+            provider = "vultr"
+            key = ""
+            image = 1
+            location = 2
+            size = 2
+            """
+        )
+        self.config.flush()
+
+    def test_no_ssh_key(self) -> None:
+        vultr = "libcloud.compute.drivers.vultr.VultrNodeDriver"
+        driver = VultrDummyNodeDriver("")
+        with patch(vultr) as mock:
+            mock.return_value = driver
+            args = [
+                "--config-file",
+                self.config.name,
+                "compute",
+                "create-node",
+                "--role",
+                "vultr",
+                "--name",
+                "name",
+            ]
+
+            result = self.runner.invoke(cli.cli, args)
+
+            self.assertIsNone(driver.call_args.get("create_key_pair"))
+            self.assertIsNone(
+                driver.call_args["create_node"].get("ex_ssh_key_ids")
+            )
+
+            self.assertEqual(result.exit_code, 0)
+
+    def test_nonexistent_ssh_key(self) -> None:
+        with tempfile.NamedTemporaryFile("w+") as tmp:
+            tmp.write("ssh-rsa nope second")
+            tmp.flush()
+
+            vultr = "libcloud.compute.drivers.vultr.VultrNodeDriver"
+            driver = VultrDummyNodeDriver("")
+            with patch(vultr) as mock:
+                mock.return_value = driver
+                args = [
+                    "--config-file",
+                    self.config.name,
+                    "compute",
+                    "create-node",
+                    "--role",
+                    "vultr",
+                    "--name",
+                    "name",
+                    "--ssh-key",
+                    tmp.name,
+                ]
+
+                result = self.runner.invoke(cli.cli, args)
+
+                self.assertIsNone(driver.call_args.get("create_key_pair"))
+                self.assertIsNone(
+                    driver.call_args["create_node"].get("ex_ssh_key_ids")
+                )
+
+                self.assertEqual(result.output, "Error: invalid key-pair\n")
+                self.assertNotEqual(result.exit_code, 0)
+
+    def test_existing_ssh_key(self) -> None:
+        with tempfile.NamedTemporaryFile("w+") as tmp:
+            tmp.write("ssh-rsa abcd xyz")
+            tmp.flush()
+
+            vultr = "libcloud.compute.drivers.vultr.VultrNodeDriver"
+            driver = VultrDummyNodeDriver("")
+            with patch(vultr) as mock:
+                mock.return_value = driver
+                args = [
+                    "--config-file",
+                    self.config.name,
+                    "compute",
+                    "create-node",
+                    "--role",
+                    "vultr",
+                    "--name",
+                    "name",
+                    "--ssh-key",
+                    tmp.name,
+                ]
+
+                result = self.runner.invoke(cli.cli, args)
+
+                self.assertIsNone(driver.call_args.get("create_key_pair"))
+
+                ssh_keys = driver.call_args["create_node"]["ex_ssh_key_ids"]
+                self.assertEqual(ssh_keys, ["2"])
+
+                self.assertEqual(result.exit_code, 0)
+
+    def test_existing_ssh_key_mismatch_comment(self) -> None:
+        with tempfile.NamedTemporaryFile("w+") as tmp:
+            tmp.write("ssh-rsa data second")
+            tmp.flush()
+
+            vultr = "libcloud.compute.drivers.vultr.VultrNodeDriver"
+            driver = VultrDummyNodeDriver("")
+            with patch(vultr) as mock:
+                mock.return_value = driver
+                args = [
+                    "--config-file",
+                    self.config.name,
+                    "compute",
+                    "create-node",
+                    "--role",
+                    "vultr",
+                    "--name",
+                    "name",
+                    "--ssh-key",
+                    tmp.name,
+                ]
+
+                result = self.runner.invoke(cli.cli, args)
+
+                self.assertIsNone(driver.call_args.get("create_key_pair"))
+
+                ssh_keys = driver.call_args["create_node"]["ex_ssh_key_ids"]
+                self.assertEqual(ssh_keys, ["1"])
+
+                self.assertEqual(result.exit_code, 0)

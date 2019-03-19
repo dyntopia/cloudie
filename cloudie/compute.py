@@ -229,3 +229,23 @@ def _create_node_digitalocean(driver: BaseDriver, kwargs: Any) -> Munch:
             )
 
     return kw
+
+
+def _create_node_vultr(driver: BaseDriver, kwargs: Any) -> Munch:
+    """
+    Process arguments for Vultr.
+    """
+    kw = Munch()
+
+    # A list of string IDs is accepted.  However, to be consistent with the
+    # `ssh_key` feature, only a single key is processed here.
+    ssh_key = kwargs.pop("ssh_key", None)
+    if ssh_key:
+        kind, key, _comment, _data = utils.read_public_key(ssh_key)
+        kp = _get(
+            driver.list_key_pairs,
+            lambda k: k.pub_key.split(" ")[:2] == [kind, key]
+        )
+        kw.ex_ssh_key_ids = [kp.id]
+
+    return kw
