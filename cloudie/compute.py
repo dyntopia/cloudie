@@ -80,6 +80,7 @@ def list_sizes(driver: BaseDriver) -> None:
 @option.add("--location", required=True)
 @option.add("--ssh-key", type=click.File("r"))
 @option.add("--password", is_flag=True)
+@option.add("--user-data", type=click.File("r"))
 @option.add("--wait", default=600)
 @option.pass_driver(Provider)
 def create_node(driver: BaseDriver, **kwargs: Any) -> None:
@@ -217,5 +218,14 @@ def _create_node_digitalocean(driver: BaseDriver, kwargs: Any) -> Munch:
             lambda k: k.public_key.split(" ")[:2] == [kind, key]
         )
         kw.ex_create_attr.ssh_keys = [kp.fingerprint]
+
+    # A string with cloud-config data less than 64 KiB is accepted.
+    user_data = kwargs.pop("user_data", None)
+    if user_data:
+        kw.ex_user_data = user_data.read()
+        if len(kw.ex_user_data) > 64 * 1024:
+            raise click.ClickException(
+                "{} is larger than 64 KiB".format(user_data.name)
+            )
 
     return kw

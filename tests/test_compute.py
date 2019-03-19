@@ -744,3 +744,82 @@ class TestCreateNodeDigitalOcean(ClickTestCase):
                 self.assertEqual(ex["ssh_keys"], ["55:66:77:88"])
 
                 self.assertEqual(result.exit_code, 0)
+
+    def test_no_user_data(self) -> None:
+        do = "libcloud.compute.drivers.digitalocean.DigitalOceanNodeDriver"
+        driver = DigitalOceanDummyNodeDriver("")
+
+        with patch(do) as mock:
+            mock.return_value = driver
+            args = [
+                "--config-file",
+                self.config.name,
+                "compute",
+                "create-node",
+                "--role",
+                "do",
+                "--name",
+                "name",
+            ]
+
+            result = self.runner.invoke(cli.cli, args)
+            user_data = driver.call_args["create_node"].get("ex_user_data")
+            self.assertIsNone(user_data)
+            self.assertEqual(result.exit_code, 0)
+
+    def test_user_data(self) -> None:
+        with tempfile.NamedTemporaryFile("w+") as tmp:
+            tmp.write("#!/bin/bash\nwhoami\n")
+            tmp.flush()
+
+            do = "libcloud.compute.drivers.digitalocean.DigitalOceanNodeDriver"
+            driver = DigitalOceanDummyNodeDriver("")
+
+            with patch(do) as mock:
+                mock.return_value = driver
+                args = [
+                    "--config-file",
+                    self.config.name,
+                    "compute",
+                    "create-node",
+                    "--role",
+                    "do",
+                    "--name",
+                    "name",
+                    "--user-data",
+                    tmp.name,
+                ]
+
+                result = self.runner.invoke(cli.cli, args)
+
+                user_data = driver.call_args["create_node"]["ex_user_data"]
+                self.assertEqual(user_data, "#!/bin/bash\nwhoami\n")
+                self.assertEqual(result.exit_code, 0)
+
+    def test_user_data_too_large(self) -> None:
+        with tempfile.NamedTemporaryFile("w+") as tmp:
+            tmp.write("A" * ((1024 * 64) + 1))
+            tmp.flush()
+
+            do = "libcloud.compute.drivers.digitalocean.DigitalOceanNodeDriver"
+            driver = DigitalOceanDummyNodeDriver("")
+
+            with patch(do) as mock:
+                mock.return_value = driver
+                args = [
+                    "--config-file",
+                    self.config.name,
+                    "compute",
+                    "create-node",
+                    "--role",
+                    "do",
+                    "--name",
+                    "name",
+                    "--user-data",
+                    tmp.name,
+                ]
+
+                result = self.runner.invoke(cli.cli, args)
+
+                self.assertTrue("is larger than 64 KiB" in result.output)
+                self.assertNotEqual(result.exit_code, 0)
