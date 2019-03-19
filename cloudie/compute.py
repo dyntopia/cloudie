@@ -8,7 +8,7 @@ from libcloud.compute.base import NodeAuthPassword, NodeAuthSSHKey
 from libcloud.compute.providers import Provider
 from munch import DefaultMunch
 
-from . import cloud, table
+from . import cloud, option, table
 
 assert security  # to make pyflakes happy
 
@@ -73,17 +73,15 @@ def list_sizes(driver: BaseDriver) -> None:
     ], driver.list_sizes())
 
 
-# pylint: disable=R1260
 @compute.command("create-node")
-@click.option("--name")
-@click.option("--size")
-@click.option("--image")
-@click.option("--location")
-@click.option("--ssh-key")
-@click.option("--password", is_flag=True)
+@option.add("--name", required=True)
+@option.add("--size", required=True)
+@option.add("--image", required=True)
+@option.add("--location", required=True)
+@option.add("--ssh-key")
+@option.add("--password", is_flag=True)
 @cloud.pass_driver(Provider)
-@click.pass_context
-def create_node(ctx: click.Context, driver: BaseDriver, **kwargs: Any) -> None:
+def create_node(driver: BaseDriver, **kwargs: Any) -> None:
     """
     Create a new node.
 
@@ -112,17 +110,15 @@ def create_node(ctx: click.Context, driver: BaseDriver, **kwargs: Any) -> None:
         raise click.ClickException("Use either --ssh-key or --password")
 
     # Process arguments common for all compute drivers.
-    try:
-        name = kwargs.pop("name") or str(ctx.obj.role.name)
-        image = kwargs.pop("image") or str(ctx.obj.role.image)
-        location = kwargs.pop("location") or str(ctx.obj.role.location)
-        size = kwargs.pop("size") or str(ctx.obj.role.size)
-    except AttributeError as e:
-        raise click.ClickException("Missing option --{}".format(e))
+    kw.name = kwargs.pop("name")
 
-    kw.name = name
+    image = kwargs.pop("image")
     kw.image = _get(driver.list_images, lambda i: i.id == image)
+
+    location = kwargs.pop("location")
     kw.location = _get(driver.list_locations, lambda l: l.id == location)
+
+    size = kwargs.pop("size")
     kw.size = _get(driver.list_sizes, lambda s: s.id == size)
 
     # Process arguments declared in `features`.  There are two arguments
@@ -149,7 +145,7 @@ def create_node(ctx: click.Context, driver: BaseDriver, **kwargs: Any) -> None:
     features = getattr(driver, "features", {}).get("create_node", [])
 
     if "ssh_key" in features:
-        ssh_key = kwargs.pop("ssh_key") or ctx.obj.role.get("ssh-key")
+        ssh_key = kwargs.pop("ssh_key")
         if ssh_key:
             try:
                 with open(ssh_key, "r") as f:
@@ -160,15 +156,14 @@ def create_node(ctx: click.Context, driver: BaseDriver, **kwargs: Any) -> None:
                 )
 
     if "password" in features and not kw.auth:
-        password = kwargs.pop("password") or ctx.obj.role.get("password")
+        password = kwargs.pop("password")
         if password:
-            if isinstance(password, bool):
-                password = click.prompt(
-                    text="Password",
-                    hide_input=True,
-                    confirmation_prompt=True,
-                )
-            kw.auth = NodeAuthPassword(password)  # pylint: disable=R0204
+            value = click.prompt(
+                text="Password",
+                hide_input=True,
+                confirmation_prompt=True,
+            )
+            kw.auth = NodeAuthPassword(value)  # pylint: disable=R0204
 
     # Bail there are any unprocessed arguments.
     args = ["--{}".format(k.replace("_", "-")) for k, v in kwargs.items() if v]
@@ -186,9 +181,6 @@ def create_node(ctx: click.Context, driver: BaseDriver, **kwargs: Any) -> None:
         ["Private IP(s)", "private_ips"],
         ["Password", "extra.password"],
     ], [driver.create_node(**kw)])
-
-
-# pylint: enable=R1260
 
 
 def _get(func: Callable, pred: Callable) -> Any:

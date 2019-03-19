@@ -259,7 +259,7 @@ class TestCreateNode(ClickTestCase):
             image = 1
             size = "3"
             location = "2"
-            password = "h0h0"
+            password = true
 
             [role.dummy-with-required-options]
             provider = "dummy"
@@ -267,7 +267,6 @@ class TestCreateNode(ClickTestCase):
             image = 1
             size = "3"
             location = "2"
-            password = "h0h0"
             """.format(ssh_key=self.ssh_key.name).encode("ascii")
         )
         self.config.flush()
@@ -283,7 +282,7 @@ class TestCreateNode(ClickTestCase):
             "compute",
             "create-node",
             "--role",
-            "dummy",
+            "dummy-ext-with-required-options",
             "--name",
             "name",
             "--ssh-key",
@@ -316,9 +315,8 @@ class TestCreateNode(ClickTestCase):
 
             result = self.runner.invoke(cli.cli, args)
 
-            self.assertEqual(
-                result.output,
-                "Error: Missing option {}\n".format(skip),
+            self.assertTrue(
+                "Error: Missing option \"{}\"".format(skip) in result.output
             )
             self.assertNotEqual(result.exit_code, 0)
 
@@ -499,7 +497,7 @@ class TestCreateNode(ClickTestCase):
                 result = self.runner.invoke(cli.cli, args)
 
             auth = ExtendedDummyNodeDriver.call_args["create_node"]["auth"]
-            self.assertEqual(auth.password, "h0h0")
+            self.assertEqual(auth.password, "supersecret")
             self.assertEqual(result.exit_code, 0)
 
     def test_feature_none_used(self) -> None:
