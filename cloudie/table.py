@@ -19,6 +19,8 @@ def show(columns: List[List[str]], rows: List[object]) -> None:
     table.set_deco(table.VLINES | table.HEADER)
 
     table.header([column[0] for column in columns])
+    table.set_cols_dtype(["t" for _ in range(len(columns))])
+
     table.add_rows([[[
         next((
             isinstance(v, list) and ", ".join(str(elm) for elm in v)

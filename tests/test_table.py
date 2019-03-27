@@ -10,6 +10,7 @@ class Obj:
     string1 = "abcd"
     string2 = "xyz"
     lst = ["aa", 123]
+    large_int = 1000000000
     dct = {
         "first": ["aaa", "bbb"],
         "second": {
@@ -33,6 +34,7 @@ class TestTable(TestCase):
                 ["List1", "lst", "none"],
                 ["List2", "dct.second.list"],
                 ["Int", "dct.third.int"],
+                ["Large int", "large_int"],
                 ["string1", "dct.second.list", "xyz"],
             ], [Obj(), Obj()])
 
@@ -43,13 +45,14 @@ class TestTable(TestCase):
                 "List1",
                 "List2",
                 "Int",
+                "Large int",
                 "string1",
             ]
             self.assertEqual(t.headers, headers)
 
             rows = [
-                ["abcd", "xyz", "", "aa, 123", "x", "321", "x"],
-                ["abcd", "xyz", "", "aa, 123", "x", "321", "x"],
+                ["abcd", "xyz", "", "aa, 123", "x", "321", "1000000000", "x"],
+                ["abcd", "xyz", "", "aa, 123", "x", "321", "1000000000", "x"],
             ]
             self.assertEqual(t.rows, rows)
 
