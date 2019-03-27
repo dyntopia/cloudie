@@ -297,7 +297,7 @@ def create_node(driver: BaseDriver, **kwargs: Any) -> None:
 
     click.echo("Waiting for the node to come online...")
     table.show([
-        ["UUID", "uuid"],
+        ["ID", "id"],
         ["Name", "name"],
         ["State", "state"],
         ["Public IP(s)", "public_ips"],
