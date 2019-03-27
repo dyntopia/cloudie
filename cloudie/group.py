@@ -3,6 +3,7 @@ from typing import Any
 import click
 from libcloud.common.exceptions import BaseHTTPError
 from libcloud.common.types import LibcloudError
+from requests.exceptions import RequestException
 
 
 class Group(click.Group):
@@ -21,3 +22,5 @@ class Group(click.Group):
             raise click.ClickException(e.value)
         except (BaseHTTPError, NotImplementedError) as e:
             raise click.ClickException(str(e))
+        except RequestException:
+            raise click.ClickException("connection failure")
