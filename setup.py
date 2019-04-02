@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import re
+import sys
 from typing import Iterator
 
 from setuptools import setup
@@ -12,8 +14,10 @@ def get_requirements(filename: str) -> Iterator[str]:
         for line in f.readlines():
             line = line.strip()
             if line and not line.startswith("#"):
-                name, *_ = line.split("=")[0].split()
-                yield name
+                m = re.match(r"([a-zA-Z0-9-_]+)[ \t]==[ \t]+([0-9\.]+)", line)
+                if not m:
+                    sys.exit("ERROR: invalid requirements.txt")
+                yield "{0} >= {1}".format(*m.groups())
 
 
 setup(
