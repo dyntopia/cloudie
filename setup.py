@@ -25,6 +25,7 @@ setup(
     version=cloudie.__version__,
     author="Hans Jerry Illikainen",
     author_email="hji@dyntopia.com",
+    license="BSD-2-Clause",
     install_requires=list(get_requirements("requirements/requirements.txt")),
     packages=["cloudie"],
     entry_points={"console_scripts": ["cloudie = cloudie.cli:cli"]}
