@@ -26,6 +26,9 @@ setup(
     author="Hans Jerry Illikainen",
     author_email="hji@dyntopia.com",
     license="BSD-2-Clause",
+    description="Command-line interface for various cloud services",
+    long_description="See https://github.com/dyntopia/cloudie",
+    url="https://github.com/dyntopia/cloudie",
     install_requires=list(get_requirements("requirements/requirements.txt")),
     packages=["cloudie"],
     entry_points={"console_scripts": ["cloudie = cloudie.cli:cli"]}
