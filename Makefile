@@ -1,4 +1,4 @@
-.PHONY: all install install-dev test qa
+.PHONY: all dist install install-dev test qa
 
 all:
 
@@ -25,3 +25,15 @@ qa:
 	pyflakes .
 	pylint --output-format parseable setup.py cloudie tests
 	yapf --diff --recursive .
+
+dist:
+	rm -rf dist tmp
+	git checkout-index --all --prefix="tmp/"
+
+	cd tmp && \
+	./setup.py sdist && \
+	fname=$$(ls dist/*.tar.gz) && \
+	gpg --detach-sign --armor --output $${fname}.asc $$fname
+
+	mv tmp/dist .
+	rm -rf tmp
