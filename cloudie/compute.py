@@ -353,8 +353,8 @@ def _create_node_vultr(driver: BaseDriver, kwargs: Any) -> Munch:
     """
     kw = Munch(ex_create_attr=Munch())
 
-    # A list of string IDs is accepted.  However, to be consistent with the
-    # `ssh_key` feature, only a single key is processed here.
+    # A list of string IDs is accepted.  However, to be consistent with
+    # the `ssh_key` feature, only a single key is processed here.
     ssh_key = kwargs.pop("ssh_key", None)
     if ssh_key:
         kind, key, _comment, _data = utils.read_public_key(ssh_key)
