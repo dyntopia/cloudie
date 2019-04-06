@@ -29,6 +29,7 @@ setup(
     description="Command-line interface for various cloud services",
     long_description="See https://github.com/dyntopia/cloudie",
     url="https://github.com/dyntopia/cloudie",
+    python_requires=">=3.5",
     install_requires=list(get_requirements("requirements/requirements.txt")),
     packages=["cloudie"],
     entry_points={"console_scripts": ["cloudie = cloudie.cli:cli"]}
