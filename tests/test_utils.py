@@ -1,3 +1,4 @@
+import io
 import tempfile
 from unittest import TestCase
 
@@ -59,3 +60,22 @@ class TestReadPublicKey(TestCase):
         self.assertEqual(key, "data")
         self.assertEqual(comment, "comment")
         self.assertEqual(data, "ssh-rsa data comment")
+
+
+class TestSha256(TestCase):
+    def test_success(self) -> None:
+        f = io.StringIO("")
+        pos = f.tell()
+        self.assertEqual(
+            utils.sha256(f),
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        )
+        self.assertEqual(f.tell(), pos)
+
+        f.write("abc\nxyz")
+        pos = f.tell()
+        self.assertEqual(
+            utils.sha256(f),
+            "042f01ade2c5988edbe230efc3f48fdcdbbe493931de8cae8bd02156802b77cd"
+        )
+        self.assertEqual(pos, f.tell())

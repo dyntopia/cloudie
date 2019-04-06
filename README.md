@@ -35,6 +35,24 @@ ssh-key = "<path to public key>"
 user-data = "<path to user-data for cloud-init>"
 ```
 
+String values surrounded with `$()` are interpreted as commands, e.g.:
+
+```toml
+[role]
+default = "test"
+
+[role.test]
+provider = "dummy"
+key = "$(gpg --decrypt /path/to/key.gpg)"
+```
+
+Users must permit command substitutions.  If approved, the SHA256
+message digest of the config file is cached in order to avoid prompting
+the next time for that particular configuration.
+
+Re-approval is required after every change to a configuration file that
+contain commands.
+
 
 # Usage
 
