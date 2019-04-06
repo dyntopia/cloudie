@@ -21,7 +21,7 @@ def get_requirements(filename: str) -> Iterator[str]:
 
 
 setup(
-    name="cloudie",
+    name=cloudie.__project__,
     version=cloudie.__version__,
     author="Hans Jerry Illikainen",
     author_email="hji@dyntopia.com",
