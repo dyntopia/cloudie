@@ -14,7 +14,7 @@ def get_requirements(filename: str) -> Iterator[str]:
         for line in f.readlines():
             line = line.strip()
             if line and not line.startswith("#"):
-                m = re.match(r"([a-zA-Z0-9-_]+)[ \t]==[ \t]+([0-9\.]+)", line)
+                m = re.match(r"([a-zA-Z0-9-_]+)[ \t]*==[ \t]*([0-9\.]+)", line)
                 if not m:
                     sys.exit("ERROR: invalid requirements.txt")
                 yield "{0} >= {1}".format(*m.groups())
