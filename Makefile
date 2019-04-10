@@ -24,6 +24,7 @@ qa:
 	pycodestyle .
 	pyflakes .
 	pylint --output-format parseable setup.py cloudie tests
+	safety check --bare --cache
 	yapf --diff --recursive .
 
 dist:
