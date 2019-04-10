@@ -2,6 +2,9 @@ language: python
 python:
   - "3.5"
   - "3.6"
+before_install:
+  - pip3 freeze > tmp.txt
+  - pip3 uninstall --yes --requirement tmp.txt
 install:
   - make install-dev
 script:
