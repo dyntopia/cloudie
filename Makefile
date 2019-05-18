@@ -21,6 +21,11 @@ qa:
 	coverage report -m
 	isort --check-only --diff --recursive .
 	mypy .
+	ossaudit \
+		--file requirements/requirements.txt \
+		--file requirements/requirements-dev-1.txt \
+		--file requirements/requirements-dev-2.txt \
+		--file requirements/requirements-dev-3.txt
 	pycodestyle .
 	pyflakes .
 	pylint --output-format parseable setup.py cloudie tests
